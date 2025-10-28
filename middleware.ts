@@ -1,89 +1,82 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 // Rutas que requieren autenticación
-const protectedRoutes = [
-  '/',
-  '/profile',
-  '/admin'
-]
+const protectedRoutes = ['/', '/chat', '/user', '/admin'];
 
-// Rutas que requieren rol de admin
-const adminRoutes = [
-  '/admin'
-]
+// Rutas solo para usuarios no autenticados (no requieren auth)
+const authRoutes = ['/login', '/register', '/verify'];
 
-// Rutas de autenticación (redirigir si ya está logueado)
-const authRoutes = [
-  '/login',
-  '/register',
-  '/verify'
-]
+// Rutas públicas (no requieren verificación)
+const publicRoutes = ['/auth/callback'];
+
+// Rutas de API que no deben ser interceptadas
+const apiRoutes = ['/api', '/_next', '/favicon.ico'];
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+  const { pathname } = request.nextUrl;
 
-  // Verificar estado de autenticación llamando al backend
-  let isAuthenticated = false
-  let isAdmin = false
-
-  try {
-    const response = await fetch(`${apiUrl}/me`, {
-      headers: {
-        Cookie: request.headers.get('cookie') || '',
-      },
-      credentials: 'include',
-    })
-
-    if (response.ok) {
-      const text = await response.text()
-      if (text) {
-        try {
-          const data = JSON.parse(text)
-          isAuthenticated = data.isAuthenticated
-          isAdmin = data.user?.roles?.includes('admin') ?? false
-        } catch (parseError) {
-          console.error('Error parsing JSON in middleware:', parseError)
-          isAuthenticated = false
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error verificando autenticación en middleware:', error)
-    isAuthenticated = false
+  // Permitir rutas de API, archivos estáticos, etc.
+  if (apiRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.next();
   }
 
-  // Redirigir usuarios autenticados desde páginas de auth
+  // Permitir rutas públicas sin verificación
+  if (publicRoutes.includes(pathname) || pathname === '/') {
+    return NextResponse.next();
+  }
+
+  // Permitir rutas de auth sin verificación (para evitar bucles)
   if (authRoutes.some(route => pathname.startsWith(route))) {
-    if (isAuthenticated) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
-  // Verificar rutas de admin
-  if (adminRoutes.some(route => pathname.startsWith(route))) {
-    if (!isAuthenticated) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-    return NextResponse.next()
-  }
-
-  // Verificar rutas protegidas
+  // Solo verificar autenticación para rutas protegidas
   if (protectedRoutes.some(route => pathname.startsWith(route))) {
-    if (!isAuthenticated) {
-      // Guardar la URL de destino para redirigir después del login
-      const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(redirectUrl)
+    try {
+      const isAuthenticated = await checkAuthentication(request);
+
+      if (!isAuthenticated) {
+        const redirectUrl = new URL('/login', request.url);
+        redirectUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(redirectUrl);
+      }
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      // En caso de error, redirigir a login
+      const redirectUrl = new URL('/login', request.url);
+      redirectUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(redirectUrl);
     }
-    return NextResponse.next()
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
+}
+
+async function checkAuthentication(request: NextRequest): Promise<boolean> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${apiUrl}/me`, {
+      method: 'GET',
+      headers: {
+        'Cookie': request.headers.get('cookie') || '',
+        'User-Agent': request.headers.get('user-agent') || '',
+      },
+      // Agregar timeout para evitar cuelgues
+      signal: AbortSignal.timeout(5000), // 5 segundos
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = await response.json();
+    return data.isAuthenticated === true;
+  } catch (error) {
+    console.error('Error checking authentication:', error);
+    return false; // En caso de error, asumir no autenticado
+  }
 }
 
 export const config = {
@@ -94,7 +87,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public files (images, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg).*)',
   ],
-}
+};

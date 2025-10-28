@@ -1,32 +1,33 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from "next/link";
-import { useAuth } from '@/hooks/useAuth'
+import { useAuthContext } from '@/providers/AuthProvider';
 
 const verificationSchema = z.object({
   code: z.string().min(6, 'El código debe tener 6 dígitos').max(6, 'El código debe tener 6 dígitos'),
-})
+});
 
-type VerificationFormData = z.infer<typeof verificationSchema>
+type VerificationFormData = z.infer<typeof verificationSchema>;
 
 const VerificationPage = () => {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { verify } = useAuth()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { verify, resendCode, isLoading, error, clearError } = useAuthContext();
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [email, setEmail] = useState<string>('')
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [email, setEmail] = useState<string>('');
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
-  const redirectUrl = searchParams.get('redirect') || '/dashboard'
+  const redirectUrl = searchParams.get('redirect') || '/';
 
   const {
     register,
@@ -35,59 +36,80 @@ const VerificationPage = () => {
     watch
   } = useForm<VerificationFormData>({
     resolver: zodResolver(verificationSchema),
-  })
+  });
 
-  const watchedCode = watch('code')
+  const watchedCode = watch('code');
 
   useEffect(() => {
-    // Obtener el email de los parámetros de URL o localStorage
-    const emailParam = searchParams.get('email')
-    const storedEmail = localStorage.getItem('pendingVerificationEmail')
+    const emailParam = searchParams.get('email');
+    const storedEmail = localStorage.getItem('pendingVerificationEmail');
 
     if (emailParam) {
-      setEmail(emailParam)
+      setEmail(emailParam);
     } else if (storedEmail) {
-      setEmail(storedEmail)
+      setEmail(storedEmail);
     } else {
-      // Si no hay email, redirigir al login
-      router.push('/login')
+      router.push('/login');
     }
-  }, [searchParams, router])
+  }, [searchParams, router]);
 
   const onSubmit = async (data: VerificationFormData) => {
     try {
-      setIsLoading(true)
-      setError(null)
+      clearError();
+      setLocalError(null);
 
-      await verify(email, data.code)
+      await verify(email, data.code);
 
-      // Limpiar email almacenado
-      localStorage.removeItem('pendingVerificationEmail')
+      localStorage.removeItem('pendingVerificationEmail');
 
-      router.push(redirectUrl)
+      router.push(redirectUrl);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        setError(error.message || 'Código de verificación inválido')
+        setLocalError(error.message || 'Código de verificación inválido');
       } else {
-        setError('Error desconocido')
+        setLocalError('Error desconocido');
+      }
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      setIsResending(true);
+      setResendSuccess(false);
+      clearError();
+      setLocalError(null);
+
+      await resendCode(email);
+      setResendSuccess(true);
+
+      setTimeout(() => {
+        setResendSuccess(false);
+      }, 3000);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setLocalError(error.message || 'Error al reenviar código');
+      } else {
+        setLocalError('Error al reenviar código');
       }
     } finally {
-      setIsLoading(false)
+      setIsResending(false);
     }
-  }
+  };
 
   const maskEmail = (email: string) => {
-    if (!email) return 'tu correo'
+    if (!email) return 'tu correo';
 
-    const [localPart, domain] = email.split('@')
-    if (!domain) return email
+    const [localPart, domain] = email.split('@');
+    if (!domain) return email;
 
     const maskedLocal = localPart.length > 2
       ? localPart.substring(0, 2) + '***' + localPart.slice(-1)
-      : '***'
+      : '***';
 
-    return `${maskedLocal}@${domain}`
-  }
+    return `${maskedLocal}@${domain}`;
+  };
+
+  const displayError = error || localError;
 
   return (
     <div className="px-4 sm:px-10 md:px-20 lg:px-40 flex justify-center items-center flex-1 py-5">
@@ -101,9 +123,17 @@ const VerificationPage = () => {
           Por favor ingresa el código a continuación para verificar tu cuenta.
         </p>
 
-        {error && (
+        {displayError && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{displayError}</AlertDescription>
+          </Alert>
+        )}
+
+        {resendSuccess && (
+          <Alert className="border-green-500 text-green-400">
+            <AlertDescription>
+              Se ha enviado un nuevo código de verificación a tu email.
+            </AlertDescription>
           </Alert>
         )}
 
@@ -137,14 +167,11 @@ const VerificationPage = () => {
             ¿No recibiste el código?{' '}
             <button
               type="button"
-              className="text-blue-400 hover:text-blue-300 transition-colors"
-              disabled={isLoading}
-              onClick={() => {
-                // Aquí podrías implementar reenvío de código
-                console.log('Reenviar código a:', email)
-              }}
+              className="text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+              disabled={isLoading || isResending}
+              onClick={handleResendCode}
             >
-              Reenviar código
+              {isResending ? 'Reenviando...' : 'Reenviar código'}
             </button>
           </p>
         </div>
@@ -156,7 +183,7 @@ const VerificationPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default VerificationPage;

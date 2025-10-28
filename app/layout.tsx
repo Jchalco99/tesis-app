@@ -1,34 +1,35 @@
-import type { Metadata } from 'next'
-import { Noto_Sans } from 'next/font/google'
-import './globals.css'
-import { Providers } from '@/providers/Providers'
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { AuthProvider } from '@/providers/AuthProvider';
 
-const font = Noto_Sans({
-  variable: '--font-noto-sans',
-  subsets: ['latin'],
-})
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: 'TECSUP - Tesis App',
-  description: 'Aplicación de tesis con sistema de chat y autenticación',
-}
+  title: "TesisAI - TECSUP",
+  description: "Sistema de búsqueda de tesis académicas con inteligencia artificial",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang='es'>
-      <body className={font.className}>
-        <Providers>
-          <div className='flex min-h-screen flex-col bg-[#121516] overflow-x-hidden'>
-            <main className='flex flex-col flex-1'>
-              {children}
-            </main>
-          </div>
-        </Providers>
+    <html lang="es">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

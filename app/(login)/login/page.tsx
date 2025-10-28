@@ -1,36 +1,35 @@
-"use client";
+'use client';
 
-import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button } from '@/components/ui/button'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import TypeWriter from 'typewriter-effect'
-import { Lock, Mail } from 'lucide-react'
-import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
-import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import TypeWriter from 'typewriter-effect';
+import { Lock, Mail } from 'lucide-react';
+import Link from 'next/link';
+import { useAuthContext } from '@/providers/AuthProvider';
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(1, 'La contraseña es requerida'),
-})
+});
 
-type LoginFormData = z.infer<typeof loginSchema>
+type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { login } = useAuth()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login, isLoading, error, clearError } = useAuthContext();
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  const redirectUrl = searchParams.get('redirect') || '/'
-  const urlError = searchParams.get('error')
+  const redirectUrl = searchParams.get('redirect') || '/';
+  const urlError = searchParams.get('error');
 
   const {
     register,
@@ -39,56 +38,66 @@ const LoginPage = () => {
     watch
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-  })
+  });
 
-  const watchedEmail = watch('email')
-  const watchedPassword = watch('password')
+  const watchedEmail = watch('email');
+  const watchedPassword = watch('password');
 
   // Mostrar error de URL si existe
   useState(() => {
     if (urlError) {
-      setError(decodeURIComponent(urlError))
+      setLocalError(decodeURIComponent(urlError));
     }
-  })
+  });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      setIsLoading(true)
-      setError(null)
+      clearError();
+      setLocalError(null);
 
-      const response = await login(data.email, data.password)
+      const response = await login(data.email, data.password);
 
       if (response.requiresVerification) {
-        localStorage.setItem('pendingVerificationEmail', response.email || data.email)
+        localStorage.setItem('pendingVerificationEmail', response.email || data.email);
 
-        const verifyUrl = new URL('/verify', window.location.origin)
-        verifyUrl.searchParams.set('email', response.email || data.email)
+        const verifyUrl = new URL('/verify', window.location.origin);
+        verifyUrl.searchParams.set('email', response.email || data.email);
         if (redirectUrl !== '/') {
-          verifyUrl.searchParams.set('redirect', redirectUrl)
+          verifyUrl.searchParams.set('redirect', redirectUrl);
         }
 
-        router.push(verifyUrl.toString())
+        router.push(verifyUrl.toString());
       } else {
-        router.push(redirectUrl)
+        router.push(redirectUrl);
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        setError(error.message || 'Error al iniciar sesión')
+        setLocalError(error.message || 'Error al iniciar sesión');
       } else {
-        setError('Error desconocido')
+        setLocalError('Error desconocido');
       }
-    } finally {
-      setIsLoading(false)
     }
-  }
+  };
 
   const handleGoogleSuccess = () => {
-    router.push(redirectUrl)
-  }
+    router.push(redirectUrl);
+  };
 
   const handleGoogleError = (error: string) => {
-    setError(error)
-  }
+    setLocalError(error);
+  };
+
+  const handleGoogleRequiresRegistration = (email: string) => {
+    const registerUrl = new URL('/register', window.location.origin);
+    registerUrl.searchParams.set('google', '1');
+    registerUrl.searchParams.set('email', email);
+    if (redirectUrl !== '/') {
+      registerUrl.searchParams.set('redirect', redirectUrl);
+    }
+    router.push(registerUrl.toString());
+  };
+
+  const displayError = error || localError;
 
   return (
     <div className='flex items-center justify-center flex-1 px-4 py-5 sm:px-10 md:px-20 lg:px-40'>
@@ -105,9 +114,9 @@ const LoginPage = () => {
           />
         </h2>
 
-        {error && (
+        {displayError && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{displayError}</AlertDescription>
           </Alert>
         )}
 
@@ -179,7 +188,9 @@ const LoginPage = () => {
             redirectUrl={redirectUrl}
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
-            usePopup={true} // Cambiar a false si prefieres redirección completa
+            onRequiresRegistration={handleGoogleRequiresRegistration}
+            usePopup={true}
+            showAccountSelector={false}
           />
         </div>
 
@@ -190,7 +201,7 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;
