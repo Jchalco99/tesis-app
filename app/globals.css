@@ -126,3 +126,83 @@ body,
     @apply bg-background text-foreground;
   }
 }
+
+/* Scrollbar personalizado para el sidebar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Para sidebar colapsado - scrollbar más pequeño */
+.custom-scrollbar.collapsed::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* Asegurar que el contenido no se corte */
+.custom-scrollbar {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Smooth scrolling para mejor UX */
+.custom-scrollbar {
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar personalizado para el sidebar móvil */
+.mobile-custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 transparent;
+}
+
+.mobile-custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mobile-custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.mobile-custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.mobile-custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Asegurar que el sheet tenga altura completa */
+.mobile-custom-scrollbar {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Mejorar el espaciado en mobile */
+@media (max-width: 768px) {
+  .mobile-custom-scrollbar {
+    padding-right: 8px;
+  }
+}

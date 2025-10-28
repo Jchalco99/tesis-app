@@ -1,26 +1,29 @@
-import Header from '@/components/header'
-import Sidebar from '@/components/sidebar'
-import { SidebarProvider } from '@/contexts/sidebar-context'
+import Header from '@/components/header';
+import Sidebar from '@/components/sidebar';
+import { SidebarProvider } from '@/contexts/sidebar-context';
+import { ChatProvider } from '@/providers/ChatProvider';
 
 type Props = {
-  children: React.ReactNode
-}
+  children: React.ReactNode;
+};
 
 const MainLayout = ({ children }: Props) => {
   return (
-    <SidebarProvider>
-      <div className='flex min-h-screen'>
-        <div className='hidden lg:block'>
-          <Sidebar />
-        </div>
+    <ChatProvider>
+      <SidebarProvider>
+        <div className='flex min-h-screen'>
+          <div className='hidden lg:block'>
+            <Sidebar />
+          </div>
 
-        <div className='flex-1 flex flex-col'>
-          <Header />
-          <main className='flex-1 overflow-auto'>{children}</main>
+          <div className='flex-1 flex flex-col'>
+            <Header />
+            <main className='flex-1 overflow-auto'>{children}</main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
-  )
-}
+      </SidebarProvider>
+    </ChatProvider>
+  );
+};
 
-export default MainLayout
+export default MainLayout;
