@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Search } from 'lucide-react'
 import TypeWriter from 'typewriter-effect'
 import ChatInput from './chat-input'
+import Link from 'next/link'
 
 export default function HomePage() {
   return (
@@ -35,15 +36,17 @@ export default function HomePage() {
                 Tesis sobre energías renovables
               </span>
             </Button>
-            <Button
-              variant='ghostOutline'
-              className='flex items-start justify-start text-left h-auto min-h-[3rem] py-3 px-4 whitespace-normal'
-            >
-              <Search className='w-4 h-4 mr-3 flex-shrink-0 mt-0.5' />
-              <span className='break-words leading-relaxed'>
-                Tesis sobre inteligencia artificial
-              </span>
-            </Button>
+            <Link href='/id'>
+              <Button
+                variant='ghostOutline'
+                className='flex items-start justify-start text-left h-auto min-h-[3rem] py-3 px-4 whitespace-normal'
+              >
+                <Search className='w-4 h-4 mr-3 flex-shrink-0 mt-0.5' />
+                <span className='break-words leading-relaxed'>
+                  Tesis sobre inteligencia artificial
+                </span>
+              </Button>
+            </Link>
             <Button
               variant='ghostOutline'
               className='flex items-start justify-start text-left h-auto min-h-[3rem] py-3 px-4 whitespace-normal md:col-span-2 lg:col-span-1'

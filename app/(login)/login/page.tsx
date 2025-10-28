@@ -1,13 +1,95 @@
 "use client";
 
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import TypeWriter from 'typewriter-effect'
 import { Lock, Mail } from 'lucide-react'
 import Link from 'next/link'
-import { FaGoogle } from 'react-icons/fa'
+import { useAuth } from '@/hooks/useAuth'
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
+
+const loginSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
+})
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 const LoginPage = () => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { login } = useAuth()
+
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const redirectUrl = searchParams.get('redirect') || '/'
+  const urlError = searchParams.get('error')
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  })
+
+  const watchedEmail = watch('email')
+  const watchedPassword = watch('password')
+
+  // Mostrar error de URL si existe
+  useState(() => {
+    if (urlError) {
+      setError(decodeURIComponent(urlError))
+    }
+  })
+
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const response = await login(data.email, data.password)
+
+      if (response.requiresVerification) {
+        localStorage.setItem('pendingVerificationEmail', response.email || data.email)
+
+        const verifyUrl = new URL('/verify', window.location.origin)
+        verifyUrl.searchParams.set('email', response.email || data.email)
+        if (redirectUrl !== '/') {
+          verifyUrl.searchParams.set('redirect', redirectUrl)
+        }
+
+        router.push(verifyUrl.toString())
+      } else {
+        router.push(redirectUrl)
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message || 'Error al iniciar sesión')
+      } else {
+        setError('Error desconocido')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGoogleSuccess = () => {
+    router.push(redirectUrl)
+  }
+
+  const handleGoogleError = (error: string) => {
+    setError(error)
+  }
+
   return (
     <div className='flex items-center justify-center flex-1 px-4 py-5 sm:px-10 md:px-20 lg:px-40'>
       <div className='w-full max-w-[512px] flex flex-col gap-6'>
@@ -22,44 +104,89 @@ const LoginPage = () => {
             }}
           />
         </h2>
-        <div className='flex flex-col gap-3'>
-          <InputGroup className='h-12 pl-2'>
-            <InputGroupInput type='email' placeholder="Email" />
-            <InputGroupAddon align="inline-end">
-              <Mail />
-            </InputGroupAddon>
-          </InputGroup>
 
-          <InputGroup className='h-12 pl-2'>
-            <InputGroupInput type='password' placeholder="Contraseña" />
-            <InputGroupAddon align="inline-end">
-              <Lock />
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-        <div className='flex flex-col gap-3'>
-          <Link href='/'>
-            <Button variant='primary' className='w-full h-10 rounded-full'>
-              Iniciar sesión
-            </Button>
-          </Link>
-          <Link href='/register'>
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-3'>
+          <div className='space-y-1'>
+            <InputGroup className='h-12 pl-2'>
+              <InputGroupInput
+                type='email'
+                placeholder="Email"
+                {...register('email')}
+                disabled={isLoading}
+              />
+              <InputGroupAddon align="inline-end">
+                <Mail />
+              </InputGroupAddon>
+            </InputGroup>
+            {errors.email && (
+              <p className="text-sm text-red-400 px-2">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className='space-y-1'>
+            <InputGroup className='h-12 pl-2'>
+              <InputGroupInput
+                type='password'
+                placeholder="Contraseña"
+                {...register('password')}
+                disabled={isLoading}
+              />
+              <InputGroupAddon align="inline-end">
+                <Lock />
+              </InputGroupAddon>
+            </InputGroup>
+            {errors.password && (
+              <p className="text-sm text-red-400 px-2">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className='flex flex-col gap-3 mt-3'>
             <Button
-              variant='primaryOutline'
+              type="submit"
+              variant='primary'
               className='w-full h-10 rounded-full'
+              disabled={isLoading || !watchedEmail || !watchedPassword}
             >
-              Registrarse
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </Button>
-          </Link>
-        </div>
+
+            <Link href='/register'>
+              <Button
+                type="button"
+                variant='primaryOutline'
+                className='w-full h-10 rounded-full'
+                disabled={isLoading}
+              >
+                Registrarse
+              </Button>
+            </Link>
+          </div>
+        </form>
+
         <div className='flex items-center justify-center'>
           <p className='mb-3 text-sm text-gray-400'>o</p>
         </div>
+
         <div className='text-center'>
-          <Button variant='ghost' className='w-full h-10 gap-2 rounded-full'>
-            <FaGoogle className='w-4 h-4 text-white' />
-            Iniciar sesión con Google
-          </Button>
+          <GoogleLoginButton
+            disabled={isLoading}
+            redirectUrl={redirectUrl}
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            usePopup={true} // Cambiar a false si prefieres redirección completa
+          />
+        </div>
+
+        <div className='text-center'>
+          <Link href='/forgot-password' className='text-sm text-gray-400 hover:text-white transition-colors'>
+            ¿Olvidaste tu contraseña?
+          </Link>
         </div>
       </div>
     </div>
