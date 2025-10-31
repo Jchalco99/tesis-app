@@ -34,6 +34,9 @@ export interface Message {
     display_name: string
     avatar_url?: string
   }
+  // Nuevos campos para IA
+  ai_sources?: AISource[]
+  ai_eval?: AIEvaluation
 }
 
 export interface MessageFeedback {
@@ -62,4 +65,31 @@ export interface MessageFeedbackData {
 export interface ConversationWithDetails extends Conversation {
   participants: Participant[]
   recent_messages?: Message[]
+}
+
+// Nuevos tipos para IA
+export interface AISource {
+  source: string
+  chunk: number
+}
+
+export interface AIEvaluation {
+  context_similarity: number
+  citation_coverage: number
+  length_ok: number
+  overall: number
+}
+
+export interface AIQueryRequest {
+  question: string
+  k?: number
+  evaluate?: boolean
+}
+
+export interface AIQueryResponse {
+  ok: boolean
+  answer: string
+  sources: AISource[]
+  latency_ms: number
+  eval?: AIEvaluation
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatService } from '@/services/chat.service';
+import { useAI } from '@/hooks/useAI';
 import {
   Conversation,
   Message,
@@ -30,6 +31,9 @@ export function useChat() {
     isSending: false,
     error: null,
   });
+
+  // Hook de IA
+  const { askQuestion: askAI, loading: aiLoading, error: aiError } = useAI();
 
   // Ref para mantener el ID de la conversación actual
   const currentConversationIdRef = useRef<string | null>(null);
@@ -119,7 +123,7 @@ export function useChat() {
     }
   }, []);
 
-  // Enviar mensaje mejorado
+  // Enviar mensaje con IA integrada
   const sendMessage = useCallback(async (content: string, conversationId?: string): Promise<string> => {
     try {
       setState(prev => ({ ...prev, isSending: true, error: null }));
@@ -170,31 +174,51 @@ export function useChat() {
         )
       }));
 
-      // Simular respuesta del bot
-      setTimeout(async () => {
-        try {
+      // Consultar a la IA directamente
+      try {
+        const aiResponse = await askAI(content);
+
+        if (aiResponse && currentConversationIdRef.current === targetConversationId) {
           const botMessageData: CreateMessageData = {
-            content: `Esta es una respuesta simulada a: "${content}". Basándome en tu consulta, he encontrado algunas tesis relevantes que podrían interesarte.`,
+            content: aiResponse.answer,
             sender: 'bot'
           };
 
           const botMessageResponse = await ChatService.sendMessage(
-            targetConversationId!,
+            targetConversationId,
             botMessageData
           );
 
-          // Solo agregar si seguimos en la misma conversación
-          if (currentConversationIdRef.current === targetConversationId) {
-            addMessageToState(botMessageResponse.data);
-          }
+          // Agregar información de IA al mensaje del bot
+          const enhancedBotMessage: Message = {
+            ...botMessageResponse.data,
+            ai_sources: aiResponse.sources,
+            ai_eval: aiResponse.eval,
+            latency_ms: aiResponse.latency_ms
+          };
 
-          setState(prev => ({ ...prev, isSending: false }));
-        } catch (error) {
-          console.error('Error al enviar respuesta del bot:', error);
-          setState(prev => ({ ...prev, isSending: false }));
+          addMessageToState(enhancedBotMessage);
         }
-      }, 1500);
+      } catch (aiError) {
+        console.error('Error en consulta IA:', aiError);
 
+        // Fallback: respuesta de error amigable
+        if (currentConversationIdRef.current === targetConversationId) {
+          const errorBotMessage: CreateMessageData = {
+            content: 'Lo siento, no pude procesar tu consulta en este momento. Asegúrate de que el motor de IA esté ejecutándose en el puerto 8010.',
+            sender: 'bot'
+          };
+
+          const botMessageResponse = await ChatService.sendMessage(
+            targetConversationId,
+            errorBotMessage
+          );
+
+          addMessageToState(botMessageResponse.data);
+        }
+      }
+
+      setState(prev => ({ ...prev, isSending: false }));
       return targetConversationId;
     } catch (error: unknown) {
       setState(prev => ({
@@ -204,7 +228,7 @@ export function useChat() {
       }));
       throw error;
     }
-  }, [createConversation, addMessageToState]);
+  }, [createConversation, addMessageToState, askAI]);
 
   // Calificar mensaje
   const rateMessage = useCallback(async (messageId: string, rating: number, comment?: string) => {
@@ -241,6 +265,8 @@ export function useChat() {
 
   return {
     ...state,
+    isSending: state.isSending || aiLoading,
+    error: state.error || aiError,
     loadConversations,
     createConversation,
     loadConversation,
