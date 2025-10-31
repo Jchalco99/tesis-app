@@ -8,7 +8,7 @@ const Header = () => {
   const { toggleSidebar } = useSidebar()
 
   return (
-    <header className='flex items-center h-12 px-4 bg-[#121516] border-b border-gray-700'>
+    <header className='flex items-center h-12 px-4 bg-[#121516] border-b border-gray-700 flex-shrink-0'>
       <div className='lg:hidden'>
         <MobileSidebar />
       </div>

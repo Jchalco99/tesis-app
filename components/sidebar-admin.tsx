@@ -9,8 +9,8 @@ const SidebarAdmin = () => {
 
   return (
     <div
-      className={`bg-[#121516] text-white border-r border-gray-700 min-h-full overflow-y-auto transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-[300px]'
+      className={`bg-[#121516] text-white border-r border-gray-700 min-h-full overflow-y-auto custom-scrollbar transition-all duration-300 ${
+        isCollapsed ? 'w-16 collapsed' : 'w-[300px]'
       }`}
     >
       <div className={`px-4 pt-8 space-y-1 ${isCollapsed ? 'px-2' : 'px-4'}`}>

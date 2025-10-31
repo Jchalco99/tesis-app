@@ -1,60 +1,66 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupTextarea,
-} from '@/components/ui/input-group';
-import { Send, Loader2 } from 'lucide-react';
-import { useChatContext } from '@/providers/ChatProvider';
+} from '@/components/ui/input-group'
+import { useChatContext } from '@/providers/ChatProvider'
+import { Loader2, Send } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 interface ChatInputProps {
-  conversationId?: string;
-  onMessageSent?: (conversationId: string) => void;
+  conversationId?: string
+  onMessageSent?: (conversationId: string) => void
 }
 
 const ChatInput = ({ conversationId, onMessageSent }: ChatInputProps) => {
-  const [message, setMessage] = useState('');
-  const { sendMessage, isSending } = useChatContext();
-  const router = useRouter();
+  const [message, setMessage] = useState('')
+  const { sendMessage, isSending } = useChatContext()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!message.trim() || isSending) return;
+    if (!message.trim() || isSending) return
 
-    const messageToSend = message;
-    setMessage(''); // Limpiar input inmediatamente para mejor UX
+    const messageToSend = message
+    setMessage('') // Limpiar input inmediatamente para mejor UX
 
     try {
-      const resultConversationId = await sendMessage(messageToSend, conversationId);
+      const resultConversationId = await sendMessage(
+        messageToSend,
+        conversationId
+      )
 
       if (onMessageSent) {
-        onMessageSent(resultConversationId);
+        onMessageSent(resultConversationId)
       } else if (!conversationId) {
         // Si estamos en la página principal y no hay conversación, navegar a la nueva
-        router.push(`/chat/${resultConversationId}`);
+        router.push(`/chat/${resultConversationId}`)
       }
     } catch (error) {
-      console.error('Error al enviar mensaje:', error);
+      console.error('Error al enviar mensaje:', error)
       // Restaurar mensaje en caso de error
-      setMessage(messageToSend);
+      setMessage(messageToSend)
     }
-  };
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+      e.preventDefault()
+      handleSubmit(e)
     }
-  };
+  }
 
   return (
-    <div className='w-full max-w-[600px]'>
-      <form onSubmit={handleSubmit} className='flex items-center gap-2 px-3 py-2 rounded-full bg-slate-700'>
+    <div className='w-full'>
+      <form
+        onSubmit={handleSubmit}
+        className='flex items-center gap-2 px-3 py-2 rounded-full bg-slate-700'
+      >
         <InputGroup className='pl-4 rounded-full [&:has([data-slot=input-group-control]:focus-visible)]:border-transparent [&:has([data-slot=input-group-control]:focus-visible)]:ring-0'>
           <InputGroupTextarea
             value={message}
@@ -72,23 +78,23 @@ const ChatInput = ({ conversationId, onMessageSent }: ChatInputProps) => {
           />
           <InputGroupAddon align='inline-end'>
             <Button
-              type="submit"
+              type='submit'
               variant='primary'
               size='sm'
               className='p-2 rounded-full'
               disabled={!message.trim() || isSending}
             >
               {isSending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className='w-4 h-4 animate-spin' />
               ) : (
-                <Send className="w-4 h-4" />
+                <Send className='w-4 h-4' />
               )}
             </Button>
           </InputGroupAddon>
         </InputGroup>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default ChatInput;
+export default ChatInput
