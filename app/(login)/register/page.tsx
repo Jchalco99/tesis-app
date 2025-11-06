@@ -34,6 +34,7 @@ export default function RegisterPage() {
     isLoading,
     error,
     clearError,
+    checkAuth,
   } = useAuthContext()
 
   const [localError, setLocalError] = useState<string | null>(null)
@@ -97,7 +98,9 @@ export default function RegisterPage() {
     }
   }
 
-  const handleGoogleSuccess = () => {
+  const handleGoogleSuccess = async () => {
+    // Actualizar el estado del usuario después de login exitoso
+    await checkAuth()
     router.push(redirectUrl)
   }
 
@@ -107,6 +110,15 @@ export default function RegisterPage() {
 
   const handleGoogleRequiresRegistration = (email: string) => {
     setValue('email', email)
+  }
+
+  const handleGoogleRequiresVerification = (email: string) => {
+    const verifyUrl = new URL('/verification', window.location.origin)
+    verifyUrl.searchParams.set('email', email)
+    if (redirectUrl !== '/') {
+      verifyUrl.searchParams.set('redirect', redirectUrl)
+    }
+    router.push(verifyUrl.toString())
   }
 
   const displayError = error || localError
@@ -260,6 +272,7 @@ export default function RegisterPage() {
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
                 onRequiresRegistration={handleGoogleRequiresRegistration}
+                onRequiresVerification={handleGoogleRequiresVerification}
                 usePopup={true}
                 showAccountSelector={true}
               />

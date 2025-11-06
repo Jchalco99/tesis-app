@@ -8,6 +8,7 @@ interface OAuthOptions {
   onSuccess?: () => void;
   onError?: (error: string) => void;
   onRequiresRegistration?: (email: string) => void;
+  onRequiresVerification?: (email: string) => void;
 }
 
 export function useOAuth(options: OAuthOptions = {}) {
@@ -50,6 +51,26 @@ export function useOAuth(options: OAuthOptions = {}) {
             // El popup se cierra a sí mismo, no intentamos cerrarlo desde aquí
             setIsLoading(false);
             options.onError?.(event.data.error || 'Error en autenticación con Google');
+          } else if (event.data.type === 'OAUTH_REQUIRES_VERIFICATION') {
+            cleanup();
+            // El popup se cierra a sí mismo, no intentamos cerrarlo desde aquí
+            setIsLoading(false);
+
+            // Llamar al callback si existe
+            if (options.onRequiresVerification && event.data.email) {
+              options.onRequiresVerification(event.data.email);
+            } else if (event.data.email) {
+              // Fallback: redirigir manualmente si no hay callback
+              const verifyUrl = new URL('/verification', window.location.origin);
+              verifyUrl.searchParams.set('email', event.data.email);
+              if (options.redirectUrl && options.redirectUrl !== '/') {
+                verifyUrl.searchParams.set('redirect', options.redirectUrl);
+              }
+              window.location.href = verifyUrl.toString();
+            } else {
+              // Si no hay email, mostrar error
+              options.onError?.('No se pudo obtener el email de Google');
+            }
           } else if (event.data.type === 'OAUTH_REQUIRES_REGISTRATION') {
             cleanup();
             // El popup se cierra a sí mismo, no intentamos cerrarlo desde aquí

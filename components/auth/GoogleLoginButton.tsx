@@ -12,6 +12,7 @@ interface GoogleLoginButtonProps {
   onSuccess?: () => void
   onError?: (error: string) => void
   onRequiresRegistration?: (email: string) => void
+  onRequiresVerification?: (email: string) => void
   showAccountSelector?: boolean
 }
 
@@ -23,6 +24,7 @@ export function GoogleLoginButton({
   onSuccess,
   onError,
   onRequiresRegistration,
+  onRequiresVerification,
   showAccountSelector = false,
 }: GoogleLoginButtonProps) {
   const { loginWithGoogle, isLoading } = useOAuth({
@@ -30,6 +32,7 @@ export function GoogleLoginButton({
     onSuccess,
     onError,
     onRequiresRegistration,
+    onRequiresVerification,
   })
 
   return (

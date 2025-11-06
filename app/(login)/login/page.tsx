@@ -28,7 +28,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 const LoginPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login, isLoading, error, clearError } = useAuthContext()
+  const { login, isLoading, error, clearError, checkAuth } = useAuthContext()
 
   const [localError, setLocalError] = useState<string | null>(null)
 
@@ -86,7 +86,9 @@ const LoginPage = () => {
     }
   }
 
-  const handleGoogleSuccess = () => {
+  const handleGoogleSuccess = async () => {
+    // Actualizar el estado del usuario después de login exitoso
+    await checkAuth()
     router.push(redirectUrl)
   }
 
@@ -102,6 +104,15 @@ const LoginPage = () => {
       registerUrl.searchParams.set('redirect', redirectUrl)
     }
     router.push(registerUrl.toString())
+  }
+
+  const handleGoogleRequiresVerification = (email: string) => {
+    const verifyUrl = new URL('/verification', window.location.origin)
+    verifyUrl.searchParams.set('email', email)
+    if (redirectUrl !== '/') {
+      verifyUrl.searchParams.set('redirect', redirectUrl)
+    }
+    router.push(verifyUrl.toString())
   }
 
   const displayError = error || localError
@@ -200,6 +211,7 @@ const LoginPage = () => {
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
             onRequiresRegistration={handleGoogleRequiresRegistration}
+            onRequiresVerification={handleGoogleRequiresVerification}
             usePopup={true}
             showAccountSelector={false}
           />

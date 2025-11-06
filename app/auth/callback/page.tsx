@@ -11,9 +11,10 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleCallback = () => {
       const error = searchParams.get('error')
-      const success = searchParams.get('success')
+      const success = searchParams.get('success') || searchParams.get('ok') // Soportar ambos
       const email = searchParams.get('email')
       const requiresRegistration = searchParams.get('requiresRegistration')
+      const requiresVerification = searchParams.get('requiresVerification')
       const redirect = searchParams.get('redirect') || '/'
 
       if (window.opener) {
@@ -23,6 +24,15 @@ export default function AuthCallbackPage() {
             {
               type: 'OAUTH_ERROR',
               error: decodeURIComponent(error),
+            },
+            window.location.origin
+          )
+        } else if (requiresVerification === 'true' && email) {
+          // Usuario necesita verificar email
+          window.opener.postMessage(
+            {
+              type: 'OAUTH_REQUIRES_VERIFICATION',
+              email: decodeURIComponent(email),
             },
             window.location.origin
           )
@@ -70,6 +80,14 @@ export default function AuthCallbackPage() {
         // Redirección completa (sin popup)
         if (error) {
           router.push(`/login?error=${error}`)
+        } else if (requiresVerification === 'true' && email) {
+          // Redirigir a verificación con el email
+          const verifyUrl = new URL('/verification', window.location.origin)
+          verifyUrl.searchParams.set('email', decodeURIComponent(email))
+          if (redirect !== '/' && redirect !== '/verify') {
+            verifyUrl.searchParams.set('redirect', redirect)
+          }
+          router.push(verifyUrl.toString())
         } else if (success === 'true') {
           router.push(redirect)
         } else if ((requiresRegistration === 'true' || email) && email) {
