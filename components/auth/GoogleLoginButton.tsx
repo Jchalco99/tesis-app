@@ -1,19 +1,18 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { FaGoogle } from 'react-icons/fa';
-import { useOAuth } from '@/hooks/useOAuth';
+import { Button } from '@/components/ui/button'
+import { useOAuth } from '@/hooks/useOAuth'
+import { FaGoogle } from 'react-icons/fa'
 
 interface GoogleLoginButtonProps {
-  className?: string;
-  disabled?: boolean;
-  usePopup?: boolean;
-  redirectUrl?: string;
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
-  onRequiresRegistration?: (email: string) => void;
-  showAccountSelector?: boolean;
+  className?: string
+  disabled?: boolean
+  usePopup?: boolean
+  redirectUrl?: string
+  onSuccess?: () => void
+  onError?: (error: string) => void
+  onRequiresRegistration?: (email: string) => void
+  showAccountSelector?: boolean
 }
 
 export function GoogleLoginButton({
@@ -24,42 +23,27 @@ export function GoogleLoginButton({
   onSuccess,
   onError,
   onRequiresRegistration,
-  showAccountSelector = false
+  showAccountSelector = false,
 }: GoogleLoginButtonProps) {
-  const {
-    loginWithGoogle,
-    clearGoogleSession,
-    isLoading
-  } = useOAuth({
+  const { loginWithGoogle, isLoading } = useOAuth({
     redirectUrl,
     onSuccess,
     onError,
-    onRequiresRegistration
-  });
-
-  const handleClick = () => {
-    loginWithGoogle(usePopup, showAccountSelector);
-  };
-
-  const handleClearSession = async () => {
-    await clearGoogleSession();
-    setTimeout(() => {
-      loginWithGoogle(usePopup, true);
-    }, 1000);
-  };
+    onRequiresRegistration,
+  })
 
   return (
-    <div className="space-y-3">
+    <div className='space-y-3'>
       <Button
-        type="button"
+        type='button'
         variant='ghost'
         className={className}
-        onClick={handleClick}
+        onClick={() => loginWithGoogle(usePopup, showAccountSelector)}
         disabled={disabled || isLoading}
       >
         <FaGoogle className='w-4 h-4 text-white' />
         {isLoading ? 'Conectando...' : 'Continuar con Google'}
       </Button>
     </div>
-  );
+  )
 }

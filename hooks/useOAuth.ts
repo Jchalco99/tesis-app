@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
 import { AuthService } from '@/services/auth.service';
+import { useCallback, useState } from 'react';
 
 interface OAuthOptions {
   redirectUrl?: string;
@@ -37,36 +37,72 @@ export function useOAuth(options: OAuthOptions = {}) {
         }
 
         const handleMessage = (event: MessageEvent) => {
+          // Verificar el origen por seguridad
           if (event.origin !== window.location.origin) return;
 
           if (event.data.type === 'OAUTH_SUCCESS') {
-            popup.close();
-            window.removeEventListener('message', handleMessage);
+            cleanup();
+            // El popup se cierra a sí mismo, no intentamos cerrarlo desde aquí
             setIsLoading(false);
             options.onSuccess?.();
           } else if (event.data.type === 'OAUTH_ERROR') {
-            popup.close();
-            window.removeEventListener('message', handleMessage);
+            cleanup();
+            // El popup se cierra a sí mismo, no intentamos cerrarlo desde aquí
             setIsLoading(false);
             options.onError?.(event.data.error || 'Error en autenticación con Google');
           } else if (event.data.type === 'OAUTH_REQUIRES_REGISTRATION') {
-            popup.close();
-            window.removeEventListener('message', handleMessage);
+            cleanup();
+            // El popup se cierra a sí mismo, no intentamos cerrarlo desde aquí
             setIsLoading(false);
-            options.onRequiresRegistration?.(event.data.email);
+
+            // Llamar al callback si existe
+            if (options.onRequiresRegistration && event.data.email) {
+              options.onRequiresRegistration(event.data.email);
+            } else if (event.data.email) {
+              // Fallback: redirigir manualmente si no hay callback
+              const registerUrl = new URL('/register', window.location.origin);
+              registerUrl.searchParams.set('google', '1');
+              registerUrl.searchParams.set('email', event.data.email);
+              if (options.redirectUrl && options.redirectUrl !== '/') {
+                registerUrl.searchParams.set('redirect', options.redirectUrl);
+              }
+              window.location.href = registerUrl.toString();
+            } else {
+              // Si no hay email, mostrar error
+              options.onError?.('No se pudo obtener el email de Google');
+            }
           }
         };
 
-        window.addEventListener('message', handleMessage);
-
         const checkClosed = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkClosed);
-            window.removeEventListener('message', handleMessage);
-            setIsLoading(false);
+          try {
+            // Intentar acceder a popup.closed
+            if (popup.closed) {
+              cleanup();
+              setIsLoading(false);
+            }
+          } catch {
+            // Si hay error de COOP, ignorarlo
+            // El popup se limpiará cuando reciba el mensaje o por timeout
           }
         }, 1000);
+
+        // Timeout de seguridad: limpiar después de 5 minutos
+        const timeout = setTimeout(() => {
+          cleanup();
+          setIsLoading(false);
+        }, 300000);
+
+        // Función de limpieza
+        const cleanup = () => {
+          clearInterval(checkClosed);
+          clearTimeout(timeout);
+          window.removeEventListener('message', handleMessage);
+        };
+
+        window.addEventListener('message', handleMessage);
       } else {
+        // Redirección completa (sin popup)
         window.location.href = url.toString();
       }
     } catch (error: unknown) {
@@ -87,8 +123,8 @@ export function useOAuth(options: OAuthOptions = {}) {
         setTimeout(() => {
           try {
             document.body.removeChild(iframe);
-          } catch (e) {
-            // Ignorar errores
+          } catch {
+            // Ignorar errores al remover iframe
           }
           resolve();
         }, 2000);

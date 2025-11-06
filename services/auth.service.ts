@@ -12,7 +12,7 @@ export interface RegisterRequest {
 }
 
 export interface VerifyRequest {
-  email: string;
+  email?: string;  // Email es opcional si hay pendingUserId en sesión
   code: string;
 }
 

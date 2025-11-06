@@ -1,103 +1,110 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import TypeWriter from 'typewriter-effect';
-import { Lock, Mail } from 'lucide-react';
-import Link from 'next/link';
-import { useAuthContext } from '@/providers/AuthProvider';
-import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group'
+import { useAuthContext } from '@/providers/AuthProvider'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Lock, Mail } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import TypeWriter from 'typewriter-effect'
+import { z } from 'zod'
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(1, 'La contraseña es requerida'),
-});
+})
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = z.infer<typeof loginSchema>
 
 const LoginPage = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { login, isLoading, error, clearError } = useAuthContext();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { login, isLoading, error, clearError } = useAuthContext()
 
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null)
 
-  const redirectUrl = searchParams.get('redirect') || '/';
-  const urlError = searchParams.get('error');
+  const redirectUrl = searchParams.get('redirect') || '/'
+  const urlError = searchParams.get('error')
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    watch
+    watch,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-  });
+  })
 
-  const watchedEmail = watch('email');
-  const watchedPassword = watch('password');
+  const watchedEmail = watch('email')
+  const watchedPassword = watch('password')
 
   // Mostrar error de URL si existe
   useState(() => {
     if (urlError) {
-      setLocalError(decodeURIComponent(urlError));
+      setLocalError(decodeURIComponent(urlError))
     }
-  });
+  })
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      clearError();
-      setLocalError(null);
+      clearError()
+      setLocalError(null)
 
-      const response = await login(data.email, data.password);
+      const response = await login(data.email, data.password)
 
       if (response.requiresVerification) {
-        localStorage.setItem('pendingVerificationEmail', response.email || data.email);
+        localStorage.setItem(
+          'pendingVerificationEmail',
+          response.email || data.email
+        )
 
-        const verifyUrl = new URL('/verify', window.location.origin);
-        verifyUrl.searchParams.set('email', response.email || data.email);
+        const verifyUrl = new URL('/verification', window.location.origin)
+        verifyUrl.searchParams.set('email', response.email || data.email)
         if (redirectUrl !== '/') {
-          verifyUrl.searchParams.set('redirect', redirectUrl);
+          verifyUrl.searchParams.set('redirect', redirectUrl)
         }
 
-        router.push(verifyUrl.toString());
+        router.push(verifyUrl.toString())
       } else {
-        router.push(redirectUrl);
+        router.push(redirectUrl)
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        setLocalError(error.message || 'Error al iniciar sesión');
+        setLocalError(error.message || 'Error al iniciar sesión')
       } else {
-        setLocalError('Error desconocido');
+        setLocalError('Error desconocido')
       }
     }
-  };
+  }
 
   const handleGoogleSuccess = () => {
-    router.push(redirectUrl);
-  };
+    router.push(redirectUrl)
+  }
 
   const handleGoogleError = (error: string) => {
-    setLocalError(error);
-  };
+    setLocalError(error)
+  }
 
   const handleGoogleRequiresRegistration = (email: string) => {
-    const registerUrl = new URL('/register', window.location.origin);
-    registerUrl.searchParams.set('google', '1');
-    registerUrl.searchParams.set('email', email);
+    const registerUrl = new URL('/register', window.location.origin)
+    registerUrl.searchParams.set('google', '1')
+    registerUrl.searchParams.set('email', email)
     if (redirectUrl !== '/') {
-      registerUrl.searchParams.set('redirect', redirectUrl);
+      registerUrl.searchParams.set('redirect', redirectUrl)
     }
-    router.push(registerUrl.toString());
-  };
+    router.push(registerUrl.toString())
+  }
 
-  const displayError = error || localError;
+  const displayError = error || localError
 
   return (
     <div className='flex items-center justify-center flex-1 px-4 py-5 sm:px-10 md:px-20 lg:px-40'>
@@ -115,7 +122,7 @@ const LoginPage = () => {
         </h2>
 
         {displayError && (
-          <Alert variant="destructive">
+          <Alert variant='destructive'>
             <AlertDescription>{displayError}</AlertDescription>
           </Alert>
         )}
@@ -125,16 +132,18 @@ const LoginPage = () => {
             <InputGroup className='h-12 pl-2'>
               <InputGroupInput
                 type='email'
-                placeholder="Email"
+                placeholder='Email'
                 {...register('email')}
                 disabled={isLoading}
               />
-              <InputGroupAddon align="inline-end">
+              <InputGroupAddon align='inline-end'>
                 <Mail />
               </InputGroupAddon>
             </InputGroup>
             {errors.email && (
-              <p className="text-sm text-red-400 px-2">{errors.email.message}</p>
+              <p className='text-sm text-red-400 px-2'>
+                {errors.email.message}
+              </p>
             )}
           </div>
 
@@ -142,22 +151,24 @@ const LoginPage = () => {
             <InputGroup className='h-12 pl-2'>
               <InputGroupInput
                 type='password'
-                placeholder="Contraseña"
+                placeholder='Contraseña'
                 {...register('password')}
                 disabled={isLoading}
               />
-              <InputGroupAddon align="inline-end">
+              <InputGroupAddon align='inline-end'>
                 <Lock />
               </InputGroupAddon>
             </InputGroup>
             {errors.password && (
-              <p className="text-sm text-red-400 px-2">{errors.password.message}</p>
+              <p className='text-sm text-red-400 px-2'>
+                {errors.password.message}
+              </p>
             )}
           </div>
 
           <div className='flex flex-col gap-3 mt-3'>
             <Button
-              type="submit"
+              type='submit'
               variant='primary'
               className='w-full h-10 rounded-full'
               disabled={isLoading || !watchedEmail || !watchedPassword}
@@ -167,7 +178,7 @@ const LoginPage = () => {
 
             <Link href='/register'>
               <Button
-                type="button"
+                type='button'
                 variant='primaryOutline'
                 className='w-full h-10 rounded-full'
                 disabled={isLoading}
@@ -195,13 +206,16 @@ const LoginPage = () => {
         </div>
 
         <div className='text-center'>
-          <Link href='/forgot-password' className='text-sm text-gray-400 hover:text-white transition-colors'>
+          <Link
+            href='/forgot-password'
+            className='text-sm text-gray-400 hover:text-white transition-colors'
+          >
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

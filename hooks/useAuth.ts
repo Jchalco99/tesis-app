@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { AuthService, User } from '@/services/auth.service';
+import { useCallback, useEffect, useState } from 'react';
 
 interface AuthState {
   user: User | null;
@@ -34,7 +34,7 @@ export function useAuth() {
         isInitialized: true,
         error: null,
       }));
-    } catch (error: unknown) {
+    } catch {
       setState(prev => ({
         ...prev,
         user: null,
@@ -98,10 +98,17 @@ export function useAuth() {
   }, [checkAuth]);
 
   // Verificar código
-  const verify = useCallback(async (email: string, code: string) => {
+  const verify = useCallback(async (email: string | null, code: string) => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
-      await AuthService.verify({ email, code });
+
+      // Si hay email, enviarlo. Si no, el backend usará pendingUserId de la sesión
+      const payload: { code: string; email?: string } = { code };
+      if (email) {
+        payload.email = email;
+      }
+
+      await AuthService.verify(payload);
       await checkAuth();
     } catch (error: unknown) {
       setState(prev => ({

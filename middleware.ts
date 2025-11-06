@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Rutas que requieren autenticación
 const protectedRoutes = ['/', '/chat', '/user', '/admin'];
 
 // Rutas solo para usuarios no autenticados (no requieren auth)
-const authRoutes = ['/login', '/register', '/verify'];
+const authRoutes = ['/login', '/register', '/verification'];
 
 // Rutas públicas (no requieren verificación)
 const publicRoutes = ['/auth/callback'];

@@ -1,22 +1,29 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 type Props = {
-  children: React.ReactNode;
-};
+  children: React.ReactNode
+}
 
 const LoginLayout = ({ children }: Props) => {
   const router = useRouter()
+  const pathname = usePathname()
   const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
+    // Permitir acceso a /verification incluso si está autenticado
+    if (pathname?.startsWith('/verification')) {
+      return
+    }
+
+    // Si está autenticado y en login/register, redirigir a home
     if (!isLoading && isAuthenticated) {
       router.push('/')
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isAuthenticated, isLoading, router, pathname])
 
   if (isLoading) {
     return (
@@ -26,15 +33,17 @@ const LoginLayout = ({ children }: Props) => {
     )
   }
 
+  // Permitir acceso a /verification siempre (autenticado o no)
+  if (pathname?.startsWith('/verification')) {
+    return <>{children}</>
+  }
+
+  // Si está autenticado y NO está en /verification, no mostrar login/register
   if (isAuthenticated) {
     return null
   }
 
-  return (
-    <>
-      {children}
-    </>
-  );
-};
+  return <>{children}</>
+}
 
-export default LoginLayout;
+export default LoginLayout

@@ -1,4 +1,4 @@
-import { User, OAuthProvider } from '@/types/auth.types'
+import { User } from '@/types/auth.types'
 
 export function hasRole(user: User | null, role: string): boolean {
   if (!user || !user.roles) return false
@@ -92,9 +92,14 @@ export function handleOAuthPopup(url: string): Promise<{ success: boolean; error
     }
 
     const checkClosed = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(checkClosed)
-        resolve({ success: true })
+      try {
+        if (popup.closed) {
+          clearInterval(checkClosed)
+          resolve({ success: true })
+        }
+      } catch {
+        // Error de COOP - ignorar
+        console.debug('No se puede verificar el estado del popup debido a COOP')
       }
     }, 1000)
 
