@@ -1,28 +1,27 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Shield, User, MessageSquare } from 'lucide-react';
-import { FaRegEdit } from 'react-icons/fa';
-import { RiRobot3Fill } from 'react-icons/ri';
-import { SidebarItem } from './sidebar-item';
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet';
-import { useChatContext } from '@/providers/ChatProvider';
+import { useChatContext } from '@/providers/ChatProvider'
+import { MessageSquare, Shield, User } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { FaRegEdit } from 'react-icons/fa'
+import { RiRobot3Fill } from 'react-icons/ri'
+import { SidebarItem } from './sidebar-item'
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet'
 
 export const MobileSidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { conversations, loadConversations, isLoading } = useChatContext();
+  const [isOpen, setIsOpen] = useState(false)
+  const { conversations, loadConversations, isLoading } = useChatContext()
 
   useEffect(() => {
-    loadConversations();
-  }, [loadConversations]);
+    loadConversations()
+  }, [loadConversations])
 
   const handleItemClick = () => {
     // Cerrar el sheet en mobile al hacer clic en un item
     setTimeout(() => {
-      setIsOpen(false);
-    }, 100);
-  };
+      setIsOpen(false)
+    }, 100)
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -61,13 +60,13 @@ export const MobileSidebar = () => {
 
             {/* Sección de conversaciones */}
             {conversations.length > 0 && (
-              <div className="flex-1 flex flex-col min-h-0">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-2">
+              <div className='flex-1 flex flex-col min-h-0'>
+                <h3 className='text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-2'>
                   Conversaciones Recientes
                 </h3>
 
                 {/* Lista de conversaciones con scroll */}
-                <div className="flex-1 overflow-y-auto space-y-1 pr-2 mobile-custom-scrollbar">
+                <div className='flex-1 overflow-y-auto space-y-1 pr-2 mobile-custom-scrollbar'>
                   {conversations.slice(0, 15).map((conversation) => (
                     <SidebarItem
                       key={conversation.id}
@@ -84,13 +83,13 @@ export const MobileSidebar = () => {
 
             {/* Mensaje cuando no hay conversaciones */}
             {conversations.length === 0 && !isLoading && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center px-4">
-                  <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500 mb-1">
+              <div className='flex-1 flex items-center justify-center'>
+                <div className='text-center px-4'>
+                  <MessageSquare className='w-12 h-12 text-gray-600 mx-auto mb-3' />
+                  <p className='text-sm text-gray-500 mb-1'>
                     No hay conversaciones aún
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className='text-xs text-gray-600'>
                     ¡Inicia tu primera conversación!
                   </p>
                 </div>
@@ -99,10 +98,10 @@ export const MobileSidebar = () => {
 
             {/* Loading state */}
             {isLoading && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center px-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-3"></div>
-                  <p className="text-xs text-gray-500">
+              <div className='flex-1 flex items-center justify-center'>
+                <div className='text-center px-4'>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-3'></div>
+                  <p className='text-xs text-gray-500'>
                     Cargando conversaciones...
                   </p>
                 </div>
@@ -113,7 +112,7 @@ export const MobileSidebar = () => {
 
         {/* Elementos del menú inferior - Siempre visible */}
         <div className='border-t border-gray-700 p-4 mt-auto bg-[#121516]'>
-          <div className="space-y-1">
+          <div className='space-y-1'>
             <SidebarItem
               label='Mi cuenta'
               href='/user'
@@ -132,5 +131,5 @@ export const MobileSidebar = () => {
         </div>
       </SheetContent>
     </Sheet>
-  );
-};
+  )
+}

@@ -2,9 +2,9 @@
 
 import { Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -115,5 +115,22 @@ export default function AuthCallbackPage() {
         <span>Procesando autenticación...</span>
       </div>
     </div>
+  )
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center min-h-screen bg-gray-900'>
+          <div className='flex items-center gap-2 text-white'>
+            <Loader2 className='w-5 h-5 animate-spin' />
+            <span>Cargando...</span>
+          </div>
+        </div>
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
   )
 }
