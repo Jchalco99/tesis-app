@@ -1,4 +1,11 @@
-import { ArrowLeft, Home, Settings, Shield, Users } from 'lucide-react'
+import {
+  ArrowLeft,
+  BarChart3,
+  Home,
+  MessageSquare,
+  Shield,
+  Users,
+} from 'lucide-react'
 import { SidebarItem } from './sidebar-item'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet'
 
@@ -30,6 +37,16 @@ export const MobileSidebarAdmin = () => {
             icon={<Home className='w-4 h-4' />}
           />
           <SidebarItem
+            label='Analytics'
+            href='/admin/analytics'
+            icon={<BarChart3 className='w-4 h-4' />}
+          />
+          <SidebarItem
+            label='Conversaciones'
+            href='/admin/conversations'
+            icon={<MessageSquare className='w-4 h-4' />}
+          />
+          <SidebarItem
             label='Usuarios'
             href='/admin/users'
             icon={<Users className='w-4 h-4' />}
@@ -38,11 +55,6 @@ export const MobileSidebarAdmin = () => {
             label='Administradores'
             href='/admin/admins'
             icon={<Shield className='w-4 h-4' />}
-          />
-          <SidebarItem
-            label='Configuración'
-            href='/admin/settings'
-            icon={<Settings className='w-4 h-4' />}
           />
         </div>
       </SheetContent>

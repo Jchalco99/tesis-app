@@ -30,11 +30,13 @@ export default function MessageComponent({ message }: MessageComponentProps) {
   }
 
   return (
-    <div className={`flex items-end gap-3 ${isUser ? 'justify-end' : ''}`}>
-      {/* Avatar del bot (izquierda) */}
+    <div
+      className={`flex items-end gap-2 sm:gap-3 ${isUser ? 'justify-end' : ''}`}
+    >
+      {/* Avatar del bot (izquierda) - Más pequeño en móvil */}
       {isBot && (
         <div
-          className='bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 sm:w-10 flex-shrink-0'
+          className='bg-center bg-no-repeat aspect-square bg-cover rounded-full w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 flex-shrink-0'
           style={{
             backgroundImage:
               'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAslSrExRAzL0hUUzsPH7MawQMsxNP0TlLrKL3xGZwN7cTBP6Lo_Qi3MczViwFHYPc9guuZ1XT9Km9EqoksMsRXIcnKsRuR0SD0q441IDylApvpf1co9uRnMT-Q9cQFS663ruJswoJlYG8dkm_KL5FVGOi7PY3iRNFbDN-6ixrEyQG1LLnfh9Mk2eCN_iWrjUrmXdzxj1B8sw1QZrIWb2wAiLVEK27tZbm-NoctU6EHGQpEIRNbXCZcGMT7QX-6zHDoQj8ZLDZbRWU")',
@@ -51,8 +53,8 @@ export default function MessageComponent({ message }: MessageComponentProps) {
 
         <div
           className={`
-          text-sm sm:text-base max-w-full sm:max-w-[400px] lg:max-w-[500px]
-          rounded-lg px-3 sm:px-4 py-2 sm:py-3
+          text-sm sm:text-base max-w-[280px] sm:max-w-[400px] lg:max-w-[500px]
+          rounded-lg px-3 py-2 sm:px-4 sm:py-3
           ${isBot ? 'bg-slate-700 text-white' : 'bg-blue-500 text-white'}
         `}
         >
@@ -139,10 +141,10 @@ export default function MessageComponent({ message }: MessageComponentProps) {
         </p>
       </div>
 
-      {/* Avatar del usuario (derecha) */}
+      {/* Avatar del usuario (derecha) - Más pequeño en móvil */}
       {isUser && (
         <div
-          className='bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 sm:w-10 flex-shrink-0'
+          className='bg-center bg-no-repeat aspect-square bg-cover rounded-full w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 flex-shrink-0'
           style={{
             backgroundImage:
               'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAQawndfYx92ha-EV2fSF7WFfl-QXgKijpm7mSRAIEq-yRm8EZiBb8zGPyvK6Xhi0riI_gkTKbersWh4KdMA4nJArloG2sqPiyW58pFj0KmriY30lL5GXXNheblwxVM04Ja5Y2QfnqNr3z9kWCwYFomfhcy3j9756PRTZkI_LMcoxd3v6lOF64za9iVqHLakTf-Xj1kv3YsM6_pl9ZExvjAh4pz7p-dM2FULTzpXtm3WkBiFqyFG1FkJPraeLTyd-3w8fj41EeMDg4")',

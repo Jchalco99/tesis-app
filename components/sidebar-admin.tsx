@@ -1,7 +1,14 @@
 'use client'
 
 import { useSidebar } from '@/contexts/sidebar-context'
-import { ArrowLeft, Home, Shield, Users } from 'lucide-react'
+import {
+  ArrowLeft,
+  BarChart3,
+  Home,
+  MessageSquare,
+  Shield,
+  Users,
+} from 'lucide-react'
 import { SidebarItem } from './sidebar-item'
 
 const SidebarAdmin = () => {
@@ -9,35 +16,54 @@ const SidebarAdmin = () => {
 
   return (
     <div
-      className={`bg-[#121516] text-white border-r border-gray-700 min-h-full overflow-y-auto custom-scrollbar transition-all duration-300 ${
-        isCollapsed ? 'w-16 collapsed' : 'w-[300px]'
+      className={`bg-[#121516] text-white border-r border-gray-700 h-screen flex flex-col transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-[300px]'
       }`}
     >
-      <div className={`px-4 pt-8 space-y-1 ${isCollapsed ? 'px-2' : 'px-4'}`}>
-        <SidebarItem
-          label='Volver al Inicio'
-          href='/'
-          icon={<ArrowLeft className='w-4 h-4' />}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem
-          label='Panel Admin'
-          href='/admin/panel'
-          icon={<Home className='w-4 h-4' />}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem
-          label='Usuarios'
-          href='/admin/users'
-          icon={<Users className='w-4 h-4' />}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem
-          label='Administradores'
-          href='/admin/admins'
-          icon={<Shield className='w-4 h-4' />}
-          isCollapsed={isCollapsed}
-        />
+      {/* Contenido superior */}
+      <div
+        className={`flex-1 overflow-y-auto custom-scrollbar ${
+          isCollapsed ? 'px-2 collapsed' : 'px-4'
+        }`}
+      >
+        <div className='pt-8 space-y-1'>
+          <SidebarItem
+            label='Volver al Inicio'
+            href='/'
+            icon={<ArrowLeft className='w-4 h-4' />}
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
+            label='Panel Admin'
+            href='/admin/panel'
+            icon={<Home className='w-4 h-4' />}
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
+            label='Analytics'
+            href='/admin/analytics'
+            icon={<BarChart3 className='w-4 h-4' />}
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
+            label='Conversaciones'
+            href='/admin/conversations'
+            icon={<MessageSquare className='w-4 h-4' />}
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
+            label='Usuarios'
+            href='/admin/users'
+            icon={<Users className='w-4 h-4' />}
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
+            label='Administradores'
+            href='/admin/admins'
+            icon={<Shield className='w-4 h-4' />}
+            isCollapsed={isCollapsed}
+          />
+        </div>
       </div>
     </div>
   )

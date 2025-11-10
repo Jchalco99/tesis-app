@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Permitir rutas públicas sin verificación
-  if (publicRoutes.includes(pathname) || pathname === '/') {
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 

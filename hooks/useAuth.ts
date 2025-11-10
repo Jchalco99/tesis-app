@@ -132,8 +132,7 @@ export function useAuth() {
         isInitialized: true,
         error: null,
       });
-    } catch (error: unknown) {
-      console.error('Error durante logout:', error);
+    } catch {
       // Limpiar estado local aunque falle la petición
       setState({
         user: null,

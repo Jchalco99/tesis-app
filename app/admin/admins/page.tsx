@@ -1,22 +1,35 @@
-"use client";
+'use client'
 
-import { Label } from "@/components/ui/label";
-import AdminInput from "./admin-input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import Link from 'next/link'
+import AdminInput from './admin-input'
 
 export default function AdminsPage() {
   const admins = [
-    { id: 1, name: "Alejandro Ruiz", email: "alejandro@ejemplo.com" },
-    { id: 2, name: "Isabel Torres", email: "isabel@ejemplo.com" },
-    { id: 3, name: "Ricardo Vega", email: "ricardo@ejemplo.com" }
+    { id: 1, name: 'Alejandro Ruiz', email: 'alejandro@ejemplo.com' },
+    { id: 2, name: 'Isabel Torres', email: 'isabel@ejemplo.com' },
+    { id: 3, name: 'Ricardo Vega', email: 'ricardo@ejemplo.com' },
   ]
 
   return (
-    <div className='p-3 md:p-6 space-y-4 md:space-y-6'>
+    <div className='h-full overflow-y-auto custom-scrollbar p-3 md:p-6 space-y-4 md:space-y-6'>
       <div className='space-y-1 md:space-y-2'>
         <h1 className='text-white text-xl md:text-2xl lg:text-3xl font-bold'>
           Gestión de Administradores
@@ -27,19 +40,9 @@ export default function AdminsPage() {
         </p>
       </div>
       <div className='px-4 space-y-4'>
-        <AdminInput
-          title='Nombre'
-          id='name'
-          type='text'
-          placeholder='Nombre'
-        />
+        <AdminInput title='Nombre' id='name' type='text' placeholder='Nombre' />
 
-        <AdminInput
-          title='Email'
-          id='email'
-          type='email'
-          placeholder='Email'
-        />
+        <AdminInput title='Email' id='email' type='email' placeholder='Email' />
 
         <div className='w-full max-w-sm items-center space-y-2 py-2'>
           <Label htmlFor='role'>Rol</Label>

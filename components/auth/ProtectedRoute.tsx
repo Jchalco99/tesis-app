@@ -17,13 +17,14 @@ export function ProtectedRoute({
   fallback,
 }: ProtectedRouteProps) {
   const router = useRouter()
-  const { isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading, isInitialized, user } = useAuth()
 
   // Verificar si el usuario es admin
   const isAdmin = user?.roles?.includes('admin') ?? false
 
   useEffect(() => {
-    if (isLoading) return
+    // Esperar a que la autenticación se inicialice
+    if (!isInitialized || isLoading) return
 
     // Si no está autenticado, redirigir a login
     if (!isAuthenticated) {
@@ -36,11 +37,20 @@ export function ProtectedRoute({
       router.push(ROUTES.DASHBOARD)
       return
     }
-  }, [isLoading, isAuthenticated, requireAdmin, isAdmin, router])
+  }, [isInitialized, isLoading, isAuthenticated, requireAdmin, isAdmin, router])
 
-  // Mostrar loading mientras se verifica la autenticación
-  if (isLoading) {
-    return fallback || <div>Cargando...</div>
+  // Mostrar loading mientras se verifica la autenticación o mientras carga
+  if (!isInitialized || isLoading) {
+    return (
+      fallback || (
+        <div className='flex items-center justify-center min-h-screen bg-gray-900'>
+          <div className='flex items-center gap-2 text-white'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-white'></div>
+            <span>Cargando...</span>
+          </div>
+        </div>
+      )
+    )
   }
 
   // Si no está autenticado, no renderizar nada (se redirigirá)

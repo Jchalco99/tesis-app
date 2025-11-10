@@ -150,17 +150,6 @@ export function useChat() {
       // Agregar mensaje temporal al estado
       addMessageToState(tempUserMessage);
 
-      // Crear mensaje temporal del bot (typing indicator alternativo)
-      const tempBotMessage: Message = {
-        id: `temp-bot-${Date.now()}`,
-        conversation_id: targetConversationId,
-        sender: 'bot',
-        content: '',
-        created_at: new Date().toISOString(),
-      };
-
-      addMessageToState(tempBotMessage);
-
       // Ejecutar la consulta a la IA en segundo plano (no esperar para devolver el conversationId)
       const conversationIdToReturn = targetConversationId;
 
@@ -174,13 +163,14 @@ export function useChat() {
             { evaluate: true } // Siempre evaluar para métricas
           );
 
-          // Remover SOLO los mensajes temporales y agregar los reales
+          // Remover el mensaje temporal del usuario y agregar los mensajes reales del servidor
           setState(prev => {
-            const withoutTemps = prev.messages.filter(msg => !msg.id.startsWith('temp-'));
+            // Filtrar mensajes temporales
+            const withoutUserTemp = prev.messages.filter(msg => msg.id !== tempUserMessage.id);
 
-            // Verificar que los mensajes no estén ya en el estado (evitar duplicados)
-            const userExists = withoutTemps.some(m => m.id === response.data.user.id);
-            const botExists = withoutTemps.some(m => m.id === response.data.bot.id);
+            // Verificar que los mensajes reales no estén ya en el estado (evitar duplicados)
+            const userExists = withoutUserTemp.some(m => m.id === response.data.user.id);
+            const botExists = withoutUserTemp.some(m => m.id === response.data.bot.id);
 
             const newMessages = [
               ...(userExists ? [] : [response.data.user]),
@@ -189,7 +179,7 @@ export function useChat() {
 
             return {
               ...prev,
-              messages: [...withoutTemps, ...newMessages],
+              messages: [...withoutUserTemp, ...newMessages],
               isSending: false
             };
           });
@@ -197,10 +187,8 @@ export function useChat() {
         } catch (aiError) {
           console.error('Error en consulta IA:', aiError);
 
-          // Remover mensaje temporal del bot
           setState(prev => ({
             ...prev,
-            messages: prev.messages.filter(msg => msg.id !== tempBotMessage.id),
             isSending: false
           }));
 

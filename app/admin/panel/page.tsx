@@ -7,7 +7,7 @@ import Year from './year'
 
 export default function PanelPage() {
   return (
-    <div className='p-3 md:p-6 space-y-4 md:space-y-6'>
+    <div className='h-full overflow-y-auto custom-scrollbar p-3 md:p-6 space-y-4 md:space-y-6'>
       <div className='space-y-1 md:space-y-2'>
         <h1 className='text-white text-xl md:text-2xl lg:text-3xl font-bold'>
           Panel de Administración
