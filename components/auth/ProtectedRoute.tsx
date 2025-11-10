@@ -1,9 +1,9 @@
 'use client'
 
-import { ReactNode, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuthGuard } from '@/hooks/useAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { ROUTES } from '@/lib/constants'
+import { useRouter } from 'next/navigation'
+import { ReactNode, useEffect } from 'react'
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -14,30 +14,29 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({
   children,
   requireAdmin = false,
-  fallback
+  fallback,
 }: ProtectedRouteProps) {
   const router = useRouter()
-  const {
-    isAuthenticated,
-    isLoading,
-    isAdmin,
-    requiresAuth,
-    requiresAdmin
-  } = useAuthGuard()
+  const { isAuthenticated, isLoading, user } = useAuth()
+
+  // Verificar si el usuario es admin
+  const isAdmin = user?.roles?.includes('admin') ?? false
 
   useEffect(() => {
     if (isLoading) return
 
-    if (requiresAuth) {
+    // Si no está autenticado, redirigir a login
+    if (!isAuthenticated) {
       router.push(ROUTES.LOGIN)
       return
     }
 
-    if (requireAdmin && requiresAdmin) {
+    // Si requiere admin pero no lo es, redirigir al dashboard
+    if (requireAdmin && !isAdmin) {
       router.push(ROUTES.DASHBOARD)
       return
     }
-  }, [isLoading, requiresAuth, requiresAdmin, requireAdmin, router])
+  }, [isLoading, isAuthenticated, requireAdmin, isAdmin, router])
 
   // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
@@ -45,12 +44,12 @@ export function ProtectedRoute({
   }
 
   // Si no está autenticado, no renderizar nada (se redirigirá)
-  if (requiresAuth) {
+  if (!isAuthenticated) {
     return fallback || null
   }
 
   // Si requiere admin pero no lo es, no renderizar nada (se redirigirá)
-  if (requireAdmin && requiresAdmin) {
+  if (requireAdmin && !isAdmin) {
     return fallback || null
   }
 
@@ -70,7 +69,9 @@ export function withAuth<P extends object>(
     )
   }
 
-  WrappedComponent.displayName = `withAuth(${Component.displayName || Component.name})`
+  WrappedComponent.displayName = `withAuth(${
+    Component.displayName || Component.name
+  })`
 
   return WrappedComponent
 }
