@@ -13,7 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Lock, Mail, User } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -26,7 +26,7 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const {
@@ -295,5 +295,23 @@ export default function RegisterPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center flex-1 px-4 py-5'>
+          <div className='w-full max-w-[512px] flex flex-col gap-6'>
+            <h2 className='text-white text-[28px] font-bold text-center'>
+              Cargando...
+            </h2>
+          </div>
+        </div>
+      }
+    >
+      <RegisterPageContent />
+    </Suspense>
   )
 }

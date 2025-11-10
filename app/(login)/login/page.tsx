@@ -13,7 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Lock, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import TypeWriter from 'typewriter-effect'
 import { z } from 'zod'
@@ -25,7 +25,7 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>
 
-const LoginPage = () => {
+const LoginPageContent = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login, isLoading, error, clearError, checkAuth } = useAuthContext()
@@ -227,6 +227,24 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
+  )
+}
+
+const LoginPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center flex-1 px-4 py-5'>
+          <div className='w-full max-w-[512px] flex flex-col gap-6'>
+            <h2 className='text-white text-[28px] font-bold text-center'>
+              Cargando...
+            </h2>
+          </div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   )
 }
 
