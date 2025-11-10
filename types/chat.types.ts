@@ -6,8 +6,10 @@ export interface Conversation {
   title?: string
   created_at: string
   closed_at?: string
+  is_active: boolean
   messages_count?: number
   participants_count?: number
+  last_message_at?: string
 }
 
 export interface Participant {
@@ -30,13 +32,15 @@ export interface Message {
   content: string
   latency_ms?: number
   created_at: string
+  metadata?: MessageMetadata
   user?: {
     display_name: string
     avatar_url?: string
   }
-  // Nuevos campos para IA
+  // Campos derivados de metadata para compatibilidad
   ai_sources?: AISource[]
   ai_eval?: AIEvaluation
+  feedback?: MessageFeedback[]
 }
 
 export interface MessageFeedback {
@@ -78,6 +82,22 @@ export interface AIEvaluation {
   citation_coverage: number
   length_ok: number
   overall: number
+}
+
+export interface MessageMetadata {
+  rag?: {
+    request?: AIQueryRequest
+    response?: {
+      sources?: AISource[]
+      evaluation?: AIEvaluation
+    }
+    raw?: unknown
+    error?: {
+      message?: string
+      status?: number | null
+      details?: unknown
+    }
+  }
 }
 
 export interface AIQueryRequest {

@@ -3,17 +3,35 @@
 import { useSidebar } from '@/contexts/sidebar-context'
 import { useChatContext } from '@/providers/ChatProvider'
 import { MessageSquare, Shield, User } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { FaRegEdit } from 'react-icons/fa'
 import { SidebarItem } from './sidebar-item'
 
 const Sidebar = () => {
   const { isCollapsed } = useSidebar()
-  const { conversations, loadConversations, isLoading } = useChatContext()
+  const { conversations, loadConversations, isLoading, deleteConversation } =
+    useChatContext()
+  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     loadConversations()
   }, [loadConversations])
+
+  // Manejar eliminación de conversación
+  const handleDeleteConversation = async (conversationId: string) => {
+    try {
+      await deleteConversation(conversationId)
+
+      // Si estamos en la conversación que se eliminó, navegar a la página principal
+      if (pathname === `/chat/${conversationId}`) {
+        router.push('/')
+      }
+    } catch (error) {
+      console.error('Error al eliminar conversación:', error)
+    }
+  }
 
   return (
     <div
@@ -52,6 +70,8 @@ const Sidebar = () => {
                   href={`/chat/${conversation.id}`}
                   icon={<MessageSquare className='w-4 h-4' />}
                   isCollapsed={isCollapsed}
+                  showMenu={true}
+                  onDelete={() => handleDeleteConversation(conversation.id)}
                 />
               ))}
             </div>

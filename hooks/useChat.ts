@@ -1,15 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatService } from '@/services/chat.service';
-import { useAI } from '@/hooks/useAI';
 import {
-  Conversation,
-  Message,
-  CreateConversationData,
-  CreateMessageData,
-  ConversationWithDetails
+    Conversation,
+    ConversationWithDetails,
+    CreateConversationData,
+    Message,
 } from '@/types/chat.types';
+import { useCallback, useRef, useState } from 'react';
 
 interface ChatState {
   conversations: Conversation[];
@@ -31,9 +29,6 @@ export function useChat() {
     isSending: false,
     error: null,
   });
-
-  // Hook de IA
-  const { askQuestion: askAI, loading: aiLoading, error: aiError } = useAI();
 
   // Ref para mantener el ID de la conversación actual
   const currentConversationIdRef = useRef<string | null>(null);
@@ -139,9 +134,9 @@ export function useChat() {
         currentConversationIdRef.current = targetConversationId;
       }
 
-      // Crear mensaje del usuario inmediatamente en el estado local
+      // Crear mensaje del usuario inmediatamente en el estado local (optimistic UI)
       const tempUserMessage: Message = {
-        id: `temp-${Date.now()}`,
+        id: `temp-user-${Date.now()}`,
         conversation_id: targetConversationId,
         sender: 'user',
         content,
@@ -155,71 +150,75 @@ export function useChat() {
       // Agregar mensaje temporal al estado
       addMessageToState(tempUserMessage);
 
-      // Enviar mensaje del usuario al servidor
-      const userMessageData: CreateMessageData = {
-        content,
-        sender: 'user'
+      // Crear mensaje temporal del bot (typing indicator alternativo)
+      const tempBotMessage: Message = {
+        id: `temp-bot-${Date.now()}`,
+        conversation_id: targetConversationId,
+        sender: 'bot',
+        content: '',
+        created_at: new Date().toISOString(),
       };
 
-      const userMessageResponse = await ChatService.sendMessage(
-        targetConversationId,
-        userMessageData
-      );
+      addMessageToState(tempBotMessage);
 
-      // Reemplazar mensaje temporal con el real
-      setState(prev => ({
-        ...prev,
-        messages: prev.messages.map(msg =>
-          msg.id === tempUserMessage.id ? userMessageResponse.data : msg
-        )
-      }));
+      // Ejecutar la consulta a la IA en segundo plano (no esperar para devolver el conversationId)
+      const conversationIdToReturn = targetConversationId;
 
-      // Consultar a la IA directamente
-      try {
-        const aiResponse = await askAI(content);
-
-        if (aiResponse && currentConversationIdRef.current === targetConversationId) {
-          const botMessageData: CreateMessageData = {
-            content: aiResponse.answer,
-            sender: 'bot'
-          };
-
-          const botMessageResponse = await ChatService.sendMessage(
-            targetConversationId,
-            botMessageData
+      // Continuar con la petición en segundo plano
+      (async () => {
+        try {
+          // Usar el endpoint /ask que maneja todo el flujo (usuario + IA)
+          const response = await ChatService.askQuestion(
+            targetConversationId!,
+            content,
+            { evaluate: true } // Siempre evaluar para métricas
           );
 
-          // Agregar información de IA al mensaje del bot
-          const enhancedBotMessage: Message = {
-            ...botMessageResponse.data,
-            ai_sources: aiResponse.sources,
-            ai_eval: aiResponse.eval,
-            latency_ms: aiResponse.latency_ms
+          // Remover SOLO los mensajes temporales y agregar los reales
+          setState(prev => {
+            const withoutTemps = prev.messages.filter(msg => !msg.id.startsWith('temp-'));
+
+            // Verificar que los mensajes no estén ya en el estado (evitar duplicados)
+            const userExists = withoutTemps.some(m => m.id === response.data.user.id);
+            const botExists = withoutTemps.some(m => m.id === response.data.bot.id);
+
+            const newMessages = [
+              ...(userExists ? [] : [response.data.user]),
+              ...(botExists ? [] : [response.data.bot])
+            ];
+
+            return {
+              ...prev,
+              messages: [...withoutTemps, ...newMessages],
+              isSending: false
+            };
+          });
+
+        } catch (aiError) {
+          console.error('Error en consulta IA:', aiError);
+
+          // Remover mensaje temporal del bot
+          setState(prev => ({
+            ...prev,
+            messages: prev.messages.filter(msg => msg.id !== tempBotMessage.id),
+            isSending: false
+          }));
+
+          // Mostrar mensaje de error
+          const errorMessage: Message = {
+            id: `error-${Date.now()}`,
+            conversation_id: targetConversationId!,
+            sender: 'system',
+            content: 'Lo siento, hubo un problema al procesar tu pregunta. Por favor, intenta de nuevo.',
+            created_at: new Date().toISOString(),
           };
 
-          addMessageToState(enhancedBotMessage);
+          addMessageToState(errorMessage);
         }
-      } catch (aiError) {
-        console.error('Error en consulta IA:', aiError);
+      })();
 
-        // Fallback: respuesta de error amigable
-        if (currentConversationIdRef.current === targetConversationId) {
-          const errorBotMessage: CreateMessageData = {
-            content: 'Lo siento, no pude procesar tu consulta en este momento. Asegúrate de que el motor de IA esté ejecutándose en el puerto 8010.',
-            sender: 'bot'
-          };
-
-          const botMessageResponse = await ChatService.sendMessage(
-            targetConversationId,
-            errorBotMessage
-          );
-
-          addMessageToState(botMessageResponse.data);
-        }
-      }
-
-      setState(prev => ({ ...prev, isSending: false }));
-      return targetConversationId;
+      // Devolver el conversationId INMEDIATAMENTE para navegación rápida
+      return conversationIdToReturn;
     } catch (error: unknown) {
       setState(prev => ({
         ...prev,
@@ -228,7 +227,7 @@ export function useChat() {
       }));
       throw error;
     }
-  }, [createConversation, addMessageToState, askAI]);
+  }, [createConversation, addMessageToState]);
 
   // Calificar mensaje
   const rateMessage = useCallback(async (messageId: string, rating: number, comment?: string) => {
@@ -240,7 +239,7 @@ export function useChat() {
         ...prev,
         messages: prev.messages.map(msg =>
           msg.id === messageId
-            ? { ...msg, feedback: { rating, comment } }
+            ? { ...msg, feedback: [{ id: Date.now(), message_id: messageId, user_id: '', rating, comment, created_at: new Date().toISOString() }] }
             : msg
         )
       }));
@@ -248,6 +247,36 @@ export function useChat() {
       setState(prev => ({
         ...prev,
         error: (error as Error).message || 'Error al calificar mensaje'
+      }));
+      throw error;
+    }
+  }, []);
+
+  // Eliminar conversación (eliminación lógica)
+  const deleteConversation = useCallback(async (id: string) => {
+    try {
+      setState(prev => ({ ...prev, error: null }));
+      await ChatService.deleteConversation(id);
+
+      // Actualizar estado inmediatamente (remover de la lista)
+      setState(prev => ({
+        ...prev,
+        conversations: prev.conversations.filter(c => c.id !== id),
+        // Si es la conversación actual, limpiarla
+        currentConversation: prev.currentConversation?.id === id ? null : prev.currentConversation,
+        messages: prev.currentConversation?.id === id ? [] : prev.messages
+      }));
+
+      // Actualizar ref si es la conversación actual
+      if (currentConversationIdRef.current === id) {
+        currentConversationIdRef.current = null;
+      }
+
+      return true;
+    } catch (error: unknown) {
+      setState(prev => ({
+        ...prev,
+        error: (error as Error).message || 'Error al eliminar conversación'
       }));
       throw error;
     }
@@ -265,13 +294,12 @@ export function useChat() {
 
   return {
     ...state,
-    isSending: state.isSending || aiLoading,
-    error: state.error || aiError,
     loadConversations,
     createConversation,
     loadConversation,
     sendMessage,
     rateMessage,
+    deleteConversation,
     clearCurrentConversation,
     addMessageToState,
     addConversationToState,
