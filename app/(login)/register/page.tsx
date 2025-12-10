@@ -20,7 +20,13 @@ import { z } from 'zod'
 const registerSchema = z.object({
   firstName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   lastName: z.string().min(2, 'El apellido debe tener al menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
+  email: z
+    .string()
+    .email('Email inválido')
+    .refine(
+      (email) => email.endsWith('@tecsup.edu.pe'),
+      'Solo se permiten correos institucionales (@tecsup.edu.pe)'
+    ),
   password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
 })
 
@@ -189,7 +195,7 @@ function RegisterPageContent() {
             <InputGroup className='h-12 pl-2'>
               <InputGroupInput
                 type='email'
-                placeholder='Email'
+                placeholder='Correo institucional'
                 {...register('email')}
                 disabled={isLoading || isGoogleFlow}
                 className={isGoogleFlow ? 'bg-gray-700 text-gray-300' : ''}

@@ -2,7 +2,10 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 // Rutas que requieren autenticación
-const protectedRoutes = ['/', '/chat', '/user', '/admin'];
+const protectedRoutes = ['/', '/chat', '/user'];
+
+// Rutas que requieren rol de administrador
+const adminRoutes = ['/admin'];
 
 // Rutas solo para usuarios no autenticados (no requieren auth)
 const authRoutes = ['/login', '/register', '/verification'];
@@ -31,12 +34,39 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Verificar si es una ruta de admin
+  if (adminRoutes.some(route => pathname.startsWith(route))) {
+    try {
+      const authData = await checkAuthentication(request);
+
+      if (!authData.isAuthenticated) {
+        const redirectUrl = new URL('/login', request.url);
+        redirectUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(redirectUrl);
+      }
+
+      // Verificar si el usuario tiene el rol de admin
+      const isAdmin = authData.user?.roles?.includes('admin') ?? false;
+      if (!isAdmin) {
+        // Redirigir a la página principal si no es admin
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    } catch (error) {
+      console.error('Error checking admin access:', error);
+      const redirectUrl = new URL('/login', request.url);
+      redirectUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    return NextResponse.next();
+  }
+
   // Solo verificar autenticación para rutas protegidas
   if (protectedRoutes.some(route => pathname.startsWith(route))) {
     try {
-      const isAuthenticated = await checkAuthentication(request);
+      const authData = await checkAuthentication(request);
 
-      if (!isAuthenticated) {
+      if (!authData.isAuthenticated) {
         const redirectUrl = new URL('/login', request.url);
         redirectUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(redirectUrl);
@@ -53,7 +83,15 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-async function checkAuthentication(request: NextRequest): Promise<boolean> {
+async function checkAuthentication(request: NextRequest): Promise<{
+  isAuthenticated: boolean
+  user?: {
+    id: string
+    email: string
+    display_name: string
+    roles?: string[]
+  }
+}> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -68,14 +106,17 @@ async function checkAuthentication(request: NextRequest): Promise<boolean> {
     });
 
     if (!response.ok) {
-      return false;
+      return { isAuthenticated: false };
     }
 
     const data = await response.json();
-    return data.isAuthenticated === true;
+    return {
+      isAuthenticated: data.isAuthenticated === true,
+      user: data.user,
+    };
   } catch (error) {
     console.error('Error checking authentication:', error);
-    return false; // En caso de error, asumir no autenticado
+    return { isAuthenticated: false };
   }
 }
 

@@ -6,37 +6,52 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
+import type { ActivityData } from '@/services/admin.service'
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 
-const chartData = [
-  { month: 'Enero', consulta: 786 },
-  { month: 'Febrero', consulta: 905 },
-  { month: 'Marzo', consulta: 637 },
-  { month: 'Abril', consulta: 473 },
-  { month: 'Mayo', consulta: 589 },
-  { month: 'Junio', consulta: 723 },
-  { month: 'Julio', consulta: 812 },
-  { month: 'Agosto', consulta: 634 },
-  { month: 'Septiembre', consulta: 456 },
-  { month: 'Octubre', consulta: 678 },
-  { month: 'Noviembre', consulta: 789 },
-  { month: 'Diciembre', consulta: 890 },
-]
-
 const chartConfig = {
-  consulta: {
-    label: 'Consultas',
+  messages: {
+    label: 'Mensajes',
     color: '#3b82f6',
   },
 } satisfies ChartConfig
 
-const Year = () => {
+type Props = {
+  data: ActivityData[]
+}
+
+const Year = ({ data }: Props) => {
+  // Transformar los datos del backend al formato del gráfico
+  const chartData = data.map((item) => ({
+    month: item.period,
+    messages: item.messages,
+  }))
+
+  // Si no hay datos, mostrar datos de ejemplo
+  const displayData =
+    chartData.length > 0
+      ? chartData
+      : [
+          { month: 'Enero', messages: 0 },
+          { month: 'Febrero', messages: 0 },
+          { month: 'Marzo', messages: 0 },
+          { month: 'Abril', messages: 0 },
+          { month: 'Mayo', messages: 0 },
+          { month: 'Junio', messages: 0 },
+          { month: 'Julio', messages: 0 },
+          { month: 'Agosto', messages: 0 },
+          { month: 'Septiembre', messages: 0 },
+          { month: 'Octubre', messages: 0 },
+          { month: 'Noviembre', messages: 0 },
+          { month: 'Diciembre', messages: 0 },
+        ]
+
   return (
     <div className='h-[200px] sm:h-[240px] md:h-[280px] w-full max-w-full overflow-hidden'>
       <ChartContainer config={chartConfig} className='w-full h-full'>
         <BarChart
           accessibilityLayer
-          data={chartData}
+          data={displayData}
           width={undefined}
           height={undefined}
           margin={{
@@ -65,8 +80,8 @@ const Year = () => {
             cursor={{ fill: '#1f2937' }}
           />
           <Bar
-            dataKey='consulta'
-            fill='var(--color-consulta)'
+            dataKey='messages'
+            fill='var(--color-messages)'
             radius={[2, 2, 0, 0]}
           />
         </BarChart>

@@ -57,12 +57,6 @@ const SidebarAdmin = () => {
             icon={<Users className='w-4 h-4' />}
             isCollapsed={isCollapsed}
           />
-          <SidebarItem
-            label='Administradores'
-            href='/admin/admins'
-            icon={<Shield className='w-4 h-4' />}
-            isCollapsed={isCollapsed}
-          />
         </div>
       </div>
     </div>

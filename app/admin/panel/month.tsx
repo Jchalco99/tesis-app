@@ -6,29 +6,44 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
+import type { ActivityData } from '@/services/admin.service'
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 
-const chartData = [
-  { week: 'Semana 1', consulta: 786 },
-  { week: 'Semana 2', consulta: 905 },
-  { week: 'Semana 3', consulta: 637 },
-  { week: 'Semana 4', consulta: 473 },
-]
-
 const chartConfig = {
-  consulta: {
-    label: 'Consultas',
+  messages: {
+    label: 'Mensajes',
     color: '#3b82f6',
   },
 } satisfies ChartConfig
 
-const Month = () => {
+type Props = {
+  data: ActivityData[]
+}
+
+const Month = ({ data }: Props) => {
+  // Transformar los datos del backend al formato del gráfico
+  const chartData = data.map((item) => ({
+    week: item.period,
+    messages: item.messages,
+  }))
+
+  // Si no hay datos, mostrar datos de ejemplo
+  const displayData =
+    chartData.length > 0
+      ? chartData
+      : [
+          { week: 'Semana 1', messages: 0 },
+          { week: 'Semana 2', messages: 0 },
+          { week: 'Semana 3', messages: 0 },
+          { week: 'Semana 4', messages: 0 },
+        ]
+
   return (
     <div className='h-[200px] sm:h-[240px] md:h-[280px] w-full max-w-full overflow-hidden'>
       <ChartContainer config={chartConfig} className='w-full h-full'>
         <BarChart
           accessibilityLayer
-          data={chartData}
+          data={displayData}
           width={undefined}
           height={undefined}
           margin={{
@@ -56,8 +71,8 @@ const Month = () => {
             cursor={{ fill: '#1f2937' }}
           />
           <Bar
-            dataKey='consulta'
-            fill='var(--color-consulta)'
+            dataKey='messages'
+            fill='var(--color-messages)'
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

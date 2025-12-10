@@ -51,11 +51,6 @@ export const MobileSidebarAdmin = () => {
             href='/admin/users'
             icon={<Users className='w-4 h-4' />}
           />
-          <SidebarItem
-            label='Administradores'
-            href='/admin/admins'
-            icon={<Shield className='w-4 h-4' />}
-          />
         </div>
       </SheetContent>
     </Sheet>

@@ -6,32 +6,47 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
+import type { ActivityData } from '@/services/admin.service'
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 
-const chartData = [
-  { day: 'Lunes', consulta: 186 },
-  { day: 'Martes', consulta: 305 },
-  { day: 'Miércoles', consulta: 237 },
-  { day: 'Jueves', consulta: 73 },
-  { day: 'Viernes', consulta: 209 },
-  { day: 'Sábado', consulta: 214 },
-  { day: 'Domingo', consulta: 152 },
-]
-
 const chartConfig = {
-  consulta: {
-    label: 'Consultas',
+  messages: {
+    label: 'Mensajes',
     color: '#3b82f6',
   },
 } satisfies ChartConfig
 
-const Week = () => {
+type Props = {
+  data: ActivityData[]
+}
+
+const Week = ({ data }: Props) => {
+  // Transformar los datos del backend al formato del gráfico
+  const chartData = data.map((item) => ({
+    day: item.period,
+    messages: item.messages,
+  }))
+
+  // Si no hay datos, mostrar datos de ejemplo
+  const displayData =
+    chartData.length > 0
+      ? chartData
+      : [
+          { day: 'Lunes', messages: 0 },
+          { day: 'Martes', messages: 0 },
+          { day: 'Miércoles', messages: 0 },
+          { day: 'Jueves', messages: 0 },
+          { day: 'Viernes', messages: 0 },
+          { day: 'Sábado', messages: 0 },
+          { day: 'Domingo', messages: 0 },
+        ]
+
   return (
     <div className='h-[200px] sm:h-[240px] md:h-[280px] w-full max-w-full overflow-hidden'>
       <ChartContainer config={chartConfig} className='w-full h-full'>
         <BarChart
           accessibilityLayer
-          data={chartData}
+          data={displayData}
           width={undefined}
           height={undefined}
           margin={{
@@ -59,8 +74,8 @@ const Week = () => {
             cursor={{ fill: '#1f2937' }}
           />
           <Bar
-            dataKey='consulta'
-            fill='var(--color-consulta)'
+            dataKey='messages'
+            fill='var(--color-messages)'
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

@@ -1,3 +1,4 @@
+import { AdminRoute } from '@/components/auth/AdminRoute'
 import HeaderAdmin from '@/components/header-admin'
 import SidebarAdmin from '@/components/sidebar-admin'
 import { SidebarProvider } from '@/contexts/sidebar-context'
@@ -8,18 +9,20 @@ type Props = {
 
 const AdminLayout = ({ children }: Props) => {
   return (
-    <SidebarProvider>
-      <div className='flex h-screen overflow-hidden'>
-        <div className='hidden lg:block'>
-          <SidebarAdmin />
-        </div>
+    <AdminRoute>
+      <SidebarProvider>
+        <div className='flex h-screen overflow-hidden'>
+          <div className='hidden lg:block'>
+            <SidebarAdmin />
+          </div>
 
-        <div className='flex-1 flex flex-col min-w-0'>
-          <HeaderAdmin />
-          <main className='flex-1 overflow-hidden'>{children}</main>
+          <div className='flex-1 flex flex-col min-w-0'>
+            <HeaderAdmin />
+            <main className='flex-1 overflow-hidden'>{children}</main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </AdminRoute>
   )
 }
 

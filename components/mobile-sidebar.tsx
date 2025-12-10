@@ -1,5 +1,6 @@
 'use client'
 
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { useChatContext } from '@/providers/ChatProvider'
 import { MessageSquare, Shield, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -11,6 +12,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet'
 export const MobileSidebar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const { conversations, loadConversations, isLoading } = useChatContext()
+  const isAdmin = useIsAdmin()
 
   useEffect(() => {
     loadConversations()
@@ -120,13 +122,15 @@ export const MobileSidebar = () => {
               isCollapsed={false}
               onClick={handleItemClick}
             />
-            <SidebarItem
-              label='Admin'
-              href='/admin/panel'
-              icon={<Shield className='w-4 h-4' />}
-              isCollapsed={false}
-              onClick={handleItemClick}
-            />
+            {isAdmin && (
+              <SidebarItem
+                label='Admin'
+                href='/admin/panel'
+                icon={<Shield className='w-4 h-4' />}
+                isCollapsed={false}
+                onClick={handleItemClick}
+              />
+            )}
           </div>
         </div>
       </SheetContent>

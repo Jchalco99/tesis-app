@@ -19,7 +19,13 @@ import TypeWriter from 'typewriter-effect'
 import { z } from 'zod'
 
 const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
+  email: z
+    .string()
+    .email('Email inválido')
+    .refine(
+      (email) => email.endsWith('@tecsup.edu.pe'),
+      'Solo se permiten correos institucionales (@tecsup.edu.pe)'
+    ),
   password: z.string().min(1, 'La contraseña es requerida'),
 })
 
@@ -143,7 +149,7 @@ const LoginPageContent = () => {
             <InputGroup className='h-12 pl-2'>
               <InputGroupInput
                 type='email'
-                placeholder='Email'
+                placeholder='Correo institucional'
                 {...register('email')}
                 disabled={isLoading}
               />

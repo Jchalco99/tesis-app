@@ -1,6 +1,7 @@
 'use client'
 
 import { useSidebar } from '@/contexts/sidebar-context'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { useChatContext } from '@/providers/ChatProvider'
 import { MessageSquare, Shield, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
@@ -14,6 +15,7 @@ const Sidebar = () => {
     useChatContext()
   const router = useRouter()
   const pathname = usePathname()
+  const isAdmin = useIsAdmin()
 
   useEffect(() => {
     loadConversations()
@@ -112,12 +114,14 @@ const Sidebar = () => {
             icon={<User className='w-4 h-4' />}
             isCollapsed={isCollapsed}
           />
-          <SidebarItem
-            label='Admin'
-            href='/admin/panel'
-            icon={<Shield className='w-4 h-4' />}
-            isCollapsed={isCollapsed}
-          />
+          {isAdmin && (
+            <SidebarItem
+              label='Admin'
+              href='/admin/panel'
+              icon={<Shield className='w-4 h-4' />}
+              isCollapsed={isCollapsed}
+            />
+          )}
         </div>
       </div>
     </div>
