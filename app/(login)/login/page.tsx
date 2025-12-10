@@ -13,7 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Lock, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import TypeWriter from 'typewriter-effect'
 import { z } from 'zod'
@@ -34,11 +34,19 @@ type LoginFormData = z.infer<typeof loginSchema>
 const LoginPageContent = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login, isLoading, error, clearError, checkAuth } = useAuthContext()
+  const { login, isLoading, error, clearError, checkAuth, isAuthenticated } = useAuthContext()
 
   const [localError, setLocalError] = useState<string | null>(null)
 
   const redirectUrl = searchParams.get('redirect') || '/'
+
+  // Si ya está autenticado, redirigir inmediatamente
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('[Login] Already authenticated, redirecting to:', redirectUrl)
+      router.push(redirectUrl)
+    }
+  }, [isAuthenticated, redirectUrl, router])
   const urlError = searchParams.get('error')
 
   const {
@@ -85,7 +93,12 @@ const LoginPageContent = () => {
         console.log('[Login] Login successful, redirecting to:', redirectUrl)
 
         // Esperar un momento para que las cookies se guarden
-        await new Promise((resolve) => setTimeout(resolve, 300))
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        // Verificar que la sesión existe
+        await checkAuth()
+
+        console.log('[Login] Session verified, redirecting...')
 
         // Usar window.location.href para forzar recarga completa
         window.location.href = redirectUrl
@@ -102,11 +115,14 @@ const LoginPageContent = () => {
 
   const handleGoogleSuccess = async () => {
     console.log('[Login] Google login successful')
+
+    // Esperar un momento para que las cookies se guarden
+    await new Promise((resolve) => setTimeout(resolve, 500))
+
     // Actualizar el estado del usuario después de login exitoso
     await checkAuth()
 
-    // Esperar un momento para que las cookies se guarden
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    console.log('[Login] Session verified, redirecting...')
 
     // Usar window.location.href para forzar recarga completa
     window.location.href = redirectUrl
