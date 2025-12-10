@@ -93,29 +93,40 @@ async function checkAuthentication(request: NextRequest): Promise<{
   }
 }> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    // Obtener la cookie de sesión correctamente usando request.cookies
+    const sessionCookie = request.cookies.get('connect.sid');
+
+    if (!sessionCookie) {
+      console.log('[Middleware] No session cookie found');
+      return { isAuthenticated: false };
+    }
 
     const response = await fetch(`${apiUrl}/me`, {
       method: 'GET',
       headers: {
-        'Cookie': request.headers.get('cookie') || '',
+        'Cookie': `connect.sid=${sessionCookie.value}`,
         'User-Agent': request.headers.get('user-agent') || '',
       },
-      // Agregar timeout para evitar cuelgues
-      signal: AbortSignal.timeout(5000), // 5 segundos
+      credentials: 'include',
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {
+      console.log('[Middleware] Auth check failed:', response.status);
       return { isAuthenticated: false };
     }
 
     const data = await response.json();
+    console.log('[Middleware] User authenticated:', data.user?.email);
+
     return {
-      isAuthenticated: data.isAuthenticated === true,
+      isAuthenticated: true,
       user: data.user,
     };
   } catch (error) {
-    console.error('Error checking authentication:', error);
+    console.error('[Middleware] Error checking authentication:', error);
     return { isAuthenticated: false };
   }
 }

@@ -65,6 +65,7 @@ const LoginPageContent = () => {
       clearError()
       setLocalError(null)
 
+      console.log('[Login] Attempting login...')
       const response = await login(data.email, data.password)
 
       if (response.requiresVerification) {
@@ -81,9 +82,16 @@ const LoginPageContent = () => {
 
         router.push(verifyUrl.toString())
       } else {
-        router.push(redirectUrl)
+        console.log('[Login] Login successful, redirecting to:', redirectUrl)
+
+        // Esperar un momento para que las cookies se guarden
+        await new Promise((resolve) => setTimeout(resolve, 300))
+
+        // Usar window.location.href para forzar recarga completa
+        window.location.href = redirectUrl
       }
     } catch (error: unknown) {
+      console.error('[Login] Error:', error)
       if (error instanceof Error) {
         setLocalError(error.message || 'Error al iniciar sesión')
       } else {
@@ -93,9 +101,15 @@ const LoginPageContent = () => {
   }
 
   const handleGoogleSuccess = async () => {
+    console.log('[Login] Google login successful')
     // Actualizar el estado del usuario después de login exitoso
     await checkAuth()
-    router.push(redirectUrl)
+
+    // Esperar un momento para que las cookies se guarden
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    // Usar window.location.href para forzar recarga completa
+    window.location.href = redirectUrl
   }
 
   const handleGoogleError = (error: string) => {
